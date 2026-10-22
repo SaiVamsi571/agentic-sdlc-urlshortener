@@ -96,6 +96,19 @@ async def redirect_url(
             user_agent=user_agent,
             referrer=referrer
         )
+        simulate = (request.query_params.get("simulate") == "true") or (request.headers.get("x-simulate") == "true")
+        if simulate:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                content={
+                    "status": "CLICK_RECORDED",
+                    "short_code": short_code,
+                    "target_url": target_url,
+                    "redirect_status": status.HTTP_307_TEMPORARY_REDIRECT,
+                    "message": f"Click successfully recorded for short code '{short_code}'."
+                },
+                status_code=status.HTTP_200_OK
+            )
         return RedirectResponse(url=target_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
     except URLNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Short code '{short_code}' not found")

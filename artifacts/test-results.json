@@ -1,9 +1,9 @@
 {
   "passed": true,
   "status": "TESTS_PASSED",
-  "total_tests": 45,
-  "passed_tests": 45,
+  "total_tests": 46,
+  "passed_tests": 46,
   "failed_tests": 0,
-  "duration_seconds": 7.48,
-  "output_snippet": "service_api.py::test_redirect_missing_404 PASSED              [ 71%]\ntests/test_service_api.py::test_expired_url_410 PASSED                   [ 73%]\ntests/test_service_concurrency.py::test_concurrent_shortening_and_resolving PASSED [ 75%]\ntests/test_service_core.py::test_base62_encoding PASSED                  [ 77%]\ntests/test_service_core.py::test_hash_64bit_deterministic PASSED         [ 80%]\ntests/test_service_core.py::test_encoder_collision_probing PASSED        [ 82%]\ntests/test_service_core.py::test_validator_valid_urls PASSED             [ 84%]\ntests/test_service_core.py::test_validator_blocks_invalid_schemes PASSED [ 86%]\ntests/test_service_core.py::test_validator_ssrf_protection PASSED        [ 88%]\ntests/test_service_core.py::test_validator_self_loop_prevention PASSED   [ 91%]\ntests/test_service_core.py::test_validator_custom_alias PASSED           [ 93%]\ntests/test_service_core.py::test_lru_cache_hit_and_eviction PASSED       [ 95%]\ntests/test_service_core.py::test_lru_cache_ttl_expiration PASSED         [ 97%]\ntests/test_service_core.py::test_sliding_window_rate_limiter PASSED      [100%]\n\n============================= 45 passed in 4.91s ==============================\n"
+  "duration_seconds": 6.9,
+  "output_snippet": "service_api.py::test_expired_url_410 PASSED                   [ 71%]\ntests/test_service_api.py::test_redirect_simulate_click PASSED           [ 73%]\ntests/test_service_concurrency.py::test_concurrent_shortening_and_resolving PASSED [ 76%]\ntests/test_service_core.py::test_base62_encoding PASSED                  [ 78%]\ntests/test_service_core.py::test_hash_64bit_deterministic PASSED         [ 80%]\ntests/test_service_core.py::test_encoder_collision_probing PASSED        [ 82%]\ntests/test_service_core.py::test_validator_valid_urls PASSED             [ 84%]\ntests/test_service_core.py::test_validator_blocks_invalid_schemes PASSED [ 86%]\ntests/test_service_core.py::test_validator_ssrf_protection PASSED        [ 89%]\ntests/test_service_core.py::test_validator_self_loop_prevention PASSED   [ 91%]\ntests/test_service_core.py::test_validator_custom_alias PASSED           [ 93%]\ntests/test_service_core.py::test_lru_cache_hit_and_eviction PASSED       [ 95%]\ntests/test_service_core.py::test_lru_cache_ttl_expiration PASSED         [ 97%]\ntests/test_service_core.py::test_sliding_window_rate_limiter PASSED      [100%]\n\n============================= 46 passed in 4.97s ==============================\n"
 }
