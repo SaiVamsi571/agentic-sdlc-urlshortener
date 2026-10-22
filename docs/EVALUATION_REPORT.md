@@ -13,8 +13,8 @@ The system was evaluated against the domain requirement of an **Enterprise URL S
 | Deliverable | Status | Location / Artifact |
 | :--- | :--- | :--- |
 | **Working Prototype (Runnable End-to-End)** | **100% COMPLETE** | `main.py`, Web Dashboard ([http://127.0.0.1:8000](http://127.0.0.1:8000)), Rich CLI (`src/cli.py`) |
-| **Architecture Overview** | **100% COMPLETE** | `ARCHITECTURE.md` (DAG, HITL, Guardrails, Metrics) |
-| **Three Scenarios (Greenfield, Brownfield, Ambiguous)** | **100% COMPLETE** | `SCENARIOS.md` and `src/scenarios/` |
+| **Architecture Overview** | **100% COMPLETE** | `docs/ARCHITECTURE.md` (DAG, HITL, Guardrails, Metrics) |
+| **Three Scenarios (Greenfield, Brownfield, Ambiguous)** | **100% COMPLETE** | `docs/SCENARIOS.md` and `src/scenarios/` |
 | **Setup & Quickstart Instructions** | **100% COMPLETE** | `README.md` (Zero-friction one-command setup) |
 | **Testing Approach, Limitations, Trade-Offs** | **100% COMPLETE** | `tests/` (28 passing tests) & Detailed below |
 

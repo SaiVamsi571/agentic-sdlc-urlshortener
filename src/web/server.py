@@ -48,6 +48,7 @@ event_subscribers: List[asyncio.Queue] = []
 class RunScenarioRequest(BaseModel):
     """Request body for triggering a pipeline scenario."""
     auto_approve: bool = False
+    proposal: Optional[str] = "brownfield"
 
 
 class HITLDecisionRequest(BaseModel):
@@ -200,6 +201,7 @@ def create_dashboard_app() -> FastAPI:
                         event_callback=sse_cb,
                         hitl_manager=hitl_manager,
                         context=active_context,
+                        proposal=req.proposal,
                     )
                 elif scenario_name == SCENARIO_AMBIGUOUS:
                     ctx = await run_ambiguous_scenario(

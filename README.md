@@ -125,9 +125,12 @@ agentic-sdlc-urlshortener/
 ├── main.py                          # Unified launcher (Web Dashboard + CLI)
 ├── requirements.txt                 # Project dependencies
 ├── README.md                        # Quickstart & architectural summary
-├── ARCHITECTURE.md                  # Deep dive on DAG, HITL, Guardrails, Metrics
-├── SCENARIOS.md                     # Detailed walkthrough of the 3 scenarios
-├── EVALUATION_REPORT.md             # Formal engineering assessment report
+├── docs/                            # Canonical Technical Documentation Suite
+│   ├── ARCHITECTURE.md              # Deep dive on DAG, HITL, Guardrails, Metrics
+│   ├── SCENARIOS.md                 # Detailed walkthrough of the 3 scenarios
+│   ├── EVALUATION_REPORT.md         # Formal engineering assessment report
+│   ├── API_REFERENCE.md             # Full OpenAPI endpoints & contracts
+│   └── AST_BLAST_RADIUS.md          # AST parsing engine & risk formulas
 │
 ├── src/
 │   ├── config.py                    # Global policies, limits, and system paths

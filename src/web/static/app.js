@@ -236,12 +236,56 @@ function showHitlModal(req) {
   riskBadge.textContent = `${risk} RISK`;
   riskBadge.className = `risk-badge risk-${risk}`;
 
+  // Update Docked bar info as well
+  const dockedBar = document.getElementById("hitl-docked-bar");
+  if (dockedBar) {
+    document.getElementById("hitl-docked-title").textContent = req.node_id || "HITL-GATE";
+    const dockedRisk = document.getElementById("hitl-docked-risk");
+    dockedRisk.textContent = `${risk} RISK`;
+    dockedRisk.className = `risk-badge risk-${risk}`;
+  }
+
+  // Update AST ribbon if metadata or artifacts present
+  const blast = (req.metadata && req.metadata.blast_radius) || null;
+  const ribbon = document.getElementById("hitl-ast-ribbon");
+  if (ribbon) {
+    if (blast) {
+      ribbon.style.display = "flex";
+      const bRisk = document.getElementById("hitl-ast-risk");
+      bRisk.textContent = `${blast.risk_category || risk} (${blast.risk_score !== undefined ? blast.risk_score : 1.0})`;
+      bRisk.style.color = (blast.risk_category === "CRITICAL" || blast.risk_category === "HIGH") ? "var(--accent-rose)" : "var(--accent-amber)";
+      document.getElementById("hitl-ast-files").textContent = `${blast.total_modules_affected || (req.affected_components ? req.affected_components.length : 0)} Modules`;
+      const isSchema = !!blast.is_schema_modified;
+      const schemaEl = document.getElementById("hitl-ast-schema");
+      schemaEl.textContent = isSchema ? "YES (Sign-Off Required)" : "NO (Non-schema logic)";
+      schemaEl.style.color = isSchema ? "var(--accent-rose)" : "var(--accent-emerald)";
+    } else {
+      ribbon.style.display = "none";
+    }
+  }
+
+  // If docked bar was showing, hide it and show modal
+  if (dockedBar) dockedBar.style.display = "none";
+  document.getElementById("hitl-modal").classList.add("active");
+}
+
+function minimizeHitlModal() {
+  document.getElementById("hitl-modal").classList.remove("active");
+  const dockedBar = document.getElementById("hitl-docked-bar");
+  if (dockedBar) dockedBar.style.display = "flex";
+}
+
+function restoreHitlModal() {
+  const dockedBar = document.getElementById("hitl-docked-bar");
+  if (dockedBar) dockedBar.style.display = "none";
   document.getElementById("hitl-modal").classList.add("active");
 }
 
 function hideHitlModal() {
   activeHitlRequestId = null;
   document.getElementById("hitl-modal").classList.remove("active");
+  const dockedBar = document.getElementById("hitl-docked-bar");
+  if (dockedBar) dockedBar.style.display = "none";
 }
 
 async function resolveHitl(approved) {
@@ -279,6 +323,9 @@ async function fetchBlastRadius(proposal) {
     if (sel && proposal && sel.value !== proposal) {
       sel.value = proposal;
     }
+    const indicator = document.getElementById("blast-updating-indicator");
+    if (indicator) indicator.style.display = "inline";
+
     const res = await fetch(`/api/pipeline/blast-radius?proposal=${encodeURIComponent(activeProposal)}`);
     if (res.ok) {
       const data = await res.json();
@@ -286,6 +333,9 @@ async function fetchBlastRadius(proposal) {
     }
   } catch (err) {
     console.error("Error fetching blast radius:", err);
+  } finally {
+    const indicator = document.getElementById("blast-updating-indicator");
+    if (indicator) indicator.style.display = "none";
   }
 }
 
@@ -309,6 +359,25 @@ function updateBlastRadiusUI(report) {
     CRITICAL: "var(--accent-rose)"
   };
   const color = colorMap[category] || "var(--accent-cyan)";
+
+  // Update active proposal badge if present
+  const badge = document.getElementById("blast-active-badge");
+  if (badge && report.selected_proposal) {
+    const labels = {
+      brownfield: "Full Scope",
+      schema_migration: "Schema Migration",
+      router_only: "Router Only",
+      cache: "Cache Layer",
+      validator: "Validator Patch"
+    };
+    badge.textContent = `Active: ${labels[report.selected_proposal] || report.selected_proposal}`;
+  }
+
+  // Flash highlight on box to visually confirm update
+  box.classList.remove("pulse-highlight");
+  void box.offsetWidth; // Force reflow
+  box.classList.add("pulse-highlight");
+  setTimeout(() => box.classList.remove("pulse-highlight"), 600);
 
   let html = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
@@ -337,7 +406,7 @@ function updateBlastRadiusUI(report) {
         <ul style="margin: 0.2rem 0 0 1.1rem; padding: 0;">
           ${indirectList.map(f => `<li><code>${f.split('/').pop()}</code></li>`).join('')}
         </ul>
-      ` : ''}
+      ` : '<div style="margin-top: 0.2rem; color: var(--accent-emerald);"><em>No downstream caller dependencies affected</em></div>'}
     </div>
   `;
   box.innerHTML = html;
@@ -390,12 +459,20 @@ async function triggerScenario(name) {
     currentNodes = JSON.parse(JSON.stringify(SCENARIO_TOPOLOGIES[name]));
     renderDAG();
   }
-  appendLog("INFO", "LAUNCHER", `Requesting run for scenario: ${name.toUpperCase()} (Auto-Approve: ${autoApprove})`);
+
+  // Retrieve proposal for brownfield scenario
+  const sel = document.getElementById("sel-blast-proposal");
+  const proposal = (name === "brownfield" && sel) ? sel.value : "brownfield";
+
+  appendLog("INFO", "LAUNCHER", `Requesting run for scenario: ${name.toUpperCase()}${name === "brownfield" ? ` [Proposal: ${proposal}]` : ""} (Auto-Approve: ${autoApprove})`);
   try {
     const res = await fetch(`/api/pipeline/run/${name}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ auto_approve: autoApprove })
+      body: JSON.stringify({
+        auto_approve: autoApprove,
+        proposal: proposal
+      })
     });
     const data = await res.json();
     console.log("Run response:", data);
@@ -514,6 +591,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-hitl-approve").addEventListener("click", () => resolveHitl(true));
   document.getElementById("btn-hitl-reject").addEventListener("click", () => resolveHitl(false));
+
+  const btnHitlMin = document.getElementById("btn-hitl-minimize");
+  if (btnHitlMin) btnHitlMin.addEventListener("click", minimizeHitlModal);
+
+  const btnHitlRest = document.getElementById("btn-hitl-restore");
+  if (btnHitlRest) btnHitlRest.addEventListener("click", restoreHitlModal);
+
+  const btnHitlDockApprove = document.getElementById("btn-hitl-docked-approve");
+  if (btnHitlDockApprove) btnHitlDockApprove.addEventListener("click", () => resolveHitl(true));
+
+  const btnHitlDockReject = document.getElementById("btn-hitl-docked-reject");
+  if (btnHitlDockReject) btnHitlDockReject.addEventListener("click", () => resolveHitl(false));
 
   document.getElementById("shorten-form").addEventListener("submit", handleShortenSubmit);
   document.getElementById("btn-test-click").addEventListener("click", handleSimulateClick);

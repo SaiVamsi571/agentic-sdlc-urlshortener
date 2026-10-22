@@ -11,7 +11,7 @@ from src.agents.release_agent import ReleaseAgent
 from src.agents.requirements_agent import RequirementsAgent
 from src.agents.security_agent import SecurityAgent
 from src.agents.test_agent import TestAgent
-from src.constants import SCENARIO_BROWNFIELD, SCENARIO_PROMPTS
+from src.constants import BLAST_RADIUS_PROPOSALS, SCENARIO_BROWNFIELD, SCENARIO_PROMPTS
 from src.orchestrator.engine import OrchestrationEngine
 from src.orchestrator.graph import DAGNode, ExecutionGraph, GateCondition
 from src.orchestrator.hitl import HITLManager
@@ -92,7 +92,8 @@ async def run_brownfield_scenario(
     auto_approve: bool = True,
     event_callback: Optional[Callable] = None,
     hitl_manager: Optional[HITLManager] = None,
-    context: Optional[PipelineContext] = None
+    context: Optional[PipelineContext] = None,
+    proposal: Optional[str] = "brownfield",
 ) -> PipelineContext:
     graph = build_brownfield_graph()
     if context is None:
@@ -100,6 +101,14 @@ async def run_brownfield_scenario(
             scenario_name=SCENARIO_BROWNFIELD,
             requirement_prompt=SCENARIO_PROMPTS[SCENARIO_BROWNFIELD],
         )
+
+    # Set proposed modifications in context so AST Blast Radius agent evaluates the selected proposal
+    selected_proposal = proposal or "brownfield"
+    proposed_files = BLAST_RADIUS_PROPOSALS.get(
+        selected_proposal, BLAST_RADIUS_PROPOSALS.get("brownfield", [])
+    )
+    context.set_artifact("proposed_modifications", proposed_files)
+    context.set_artifact("selected_proposal", selected_proposal)
 
     hitl_mgr = hitl_manager or HITLManager(auto_approve_default=auto_approve)
     engine = OrchestrationEngine(hitl_manager=hitl_mgr, event_callback=event_callback)

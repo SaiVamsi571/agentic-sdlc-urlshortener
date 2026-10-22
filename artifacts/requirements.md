@@ -1,12 +1,12 @@
 # Software Requirements Specification (SRS)
-**Scenario**: BROWNFIELD
-**Pipeline**: `8de30559-e1b0-4a66-9d34-029c9d5f9f21`
+**Scenario**: AMBIGUOUS
+**Pipeline**: `58dd8e46-cb65-470c-83d5-cdad9337668f`
 
 ## Input Prompt
-> "Add sliding-window rate limiting and granular device/referrer click analytics without breaking existing APIs."
+> "Make the URL shortener faster, add marketing campaign things, and ensure expired links don't break horribly."
 
 ## Ambiguity Assessment
-- Ambiguity Score: `0.65`
+- Ambiguity Score: `0.8`
 - Status: `NORMALIZED_AND_LOCKED`
 
 ## Normalized Constraints
