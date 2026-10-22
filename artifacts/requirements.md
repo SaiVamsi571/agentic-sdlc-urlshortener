@@ -1,12 +1,12 @@
 # Software Requirements Specification (SRS)
-**Scenario**: GREENFIELD
-**Pipeline**: `60242cf5-1730-453a-89ce-1ba65e8848e4`
+**Scenario**: BROWNFIELD
+**Pipeline**: `d2b07161-c81f-4d96-bb8d-c7fa89ed80a6`
 
 ## Input Prompt
-> "Build enterprise URL shortener with Base62, custom aliases, 30-day TTL, LRU caching, and click analytics."
+> "Add sliding-window rate limiting and granular device/referrer click analytics without breaking existing APIs."
 
 ## Ambiguity Assessment
-- Ambiguity Score: `0.5`
+- Ambiguity Score: `0.65`
 - Status: `NORMALIZED_AND_LOCKED`
 
 ## Normalized Constraints
