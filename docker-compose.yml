@@ -1,0 +1,99 @@
+services:
+  # ============================================================================
+  # AetherSDLC Platform & Target URL Shortener Service
+  # ============================================================================
+  aethersdlc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aethersdlc-platform
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - WEB_HOST=0.0.0.0
+      - WEB_PORT=8000
+      - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://aetheruser:aetherpass_secure@postgres:5432/aethersdlc
+    volumes:
+      - aether_logs:/app/logs
+      - aether_artifacts:/app/artifacts
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; res = urllib.request.urlopen('http://127.0.0.1:8000/api/pipeline/status'); exit(0 if res.status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - aether_network
+
+  # ============================================================================
+  # Distributed Cache & Sliding-Window Rate Limiter
+  # ============================================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: aethersdlc-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - aether_network
+
+  # ============================================================================
+  # Production Relational Persistence Store
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: aethersdlc-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=aethersdlc
+      - POSTGRES_USER=aetheruser
+      - POSTGRES_PASSWORD=aetherpass_secure
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aetheruser -d aethersdlc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - aether_network
+
+# ==============================================================================
+# Persistent Named Volumes & Bridge Network
+# ==============================================================================
+volumes:
+  aether_logs:
+    name: aethersdlc_logs
+  aether_artifacts:
+    name: aethersdlc_artifacts
+  redis_data:
+    name: aethersdlc_redis_data
+  postgres_data:
+    name: aethersdlc_postgres_data
+
+networks:
+  aether_network:
+    name: aethersdlc_net
+    driver: bridge

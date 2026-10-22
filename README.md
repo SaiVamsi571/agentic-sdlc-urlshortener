@@ -66,11 +66,33 @@ python main.py --scenario all
 ```
 
 ### 4. Running the Complete Automated Test Suite
-Execute all 45 unit, integration, concurrency, LLM provider, and orchestration tests:
+Execute all 46 unit, integration, concurrency, LLM provider, and orchestration tests:
 ```bash
 python -m pytest tests/ -v
 ```
-*(All 45 tests pass in < 5 seconds with 100% pass rate).*
+*(All 46 tests pass in < 5 seconds with 100% pass rate).*
+
+### 5. Running via Production Docker Compose
+To launch the fully containerized production stack (AetherSDLC + Redis Distributed Cache + PostgreSQL Store):
+```bash
+# Build and launch all container services in background
+docker compose up -d
+
+# Check running container health status
+docker compose ps
+
+# Follow container logs
+docker compose logs -f aethersdlc
+```
+The services will be reachable at:
+- **Web Dashboard & Target Shortener**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- **Redis Distributed Cache**: `localhost:6379`
+- **PostgreSQL Relational DB**: `localhost:5432`
+
+To tear down the containers and preserve persistent database volumes:
+```bash
+docker compose down
+```
 
 ---
 
@@ -291,8 +313,15 @@ The system tracks real-time enterprise reliability telemetry:
 ```
 agentic-sdlc-urlshortener/
 ├── main.py                          # Unified launcher (Web Dashboard + CLI)
+├── Dockerfile                       # Multi-stage production container build
+├── docker-compose.yml               # Multi-container orchestration (App, Redis, PostgreSQL)
+├── .dockerignore                    # Excluded development caches and secrets
 ├── requirements.txt                 # Project dependencies
 ├── README.md                        # Quickstart & architectural summary
+├── .github/                         # Continuous Integration & Delivery
+│   └── workflows/
+│       └── ci-cd.yml                # Automated test matrix, Docker build, & smoke tests
+│
 ├── docs/                            # Canonical Technical Documentation Suite
 │   ├── ARCHITECTURE.md              # Deep dive on DAG, HITL, Guardrails, Metrics
 │   ├── SCENARIOS.md                 # Detailed walkthrough of the 3 scenarios
@@ -356,7 +385,7 @@ agentic-sdlc-urlshortener/
 │   │       ├── styles.css           # Glassmorphism dark-mode styles
 │   │       └── app.js               # Reactive SVG DAG & sandbox logic
 │   │
-├── tests/                           # Complete Test Suite (45 passing tests)
+├── tests/                           # Complete Test Suite (46 passing tests)
 │   ├── test_llm.py                  # LLM provider tests (API validation, quota errors, fallback)
 │   ├── test_service_core.py         # Unit tests (Base62, Murmur3, Validator, Cache, Limiter)
 │   ├── test_service_api.py          # Integration tests (Shorten, 307 redirect, 410 expired)
