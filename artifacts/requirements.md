@@ -1,12 +1,12 @@
 # Software Requirements Specification (SRS)
-**Scenario**: AMBIGUOUS
-**Pipeline**: `f080e49e-97ec-4afd-9399-54ad18bc0bd8`
+**Scenario**: GREENFIELD
+**Pipeline**: `f64577a9-515e-42b4-9fd3-191ca63986a7`
 
 ## Input Prompt
-> "Make the URL shortener faster, add marketing campaign things, and ensure expired links don't break horribly."
+> "Build enterprise URL shortener with Base62, custom aliases, 30-day TTL, LRU caching, and click analytics."
 
 ## Ambiguity Assessment
-- Ambiguity Score: `0.8`
+- Ambiguity Score: `0.5`
 - Status: `NORMALIZED_AND_LOCKED`
 
 ## Normalized Constraints

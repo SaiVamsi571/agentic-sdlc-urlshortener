@@ -22,6 +22,7 @@ from src.constants import (
 )
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.rollback import RollbackController
+from src.orchestrator.sandbox import SandboxExecutionEnvironment
 from src.orchestrator.state import PipelineContext, SDLCPhase
 
 
@@ -456,7 +457,12 @@ class CoderAgent(BaseAgent):
         design_file = artifacts_dir / "engineering-design.md"
         design_file.write_text(design_doc, encoding="utf-8")
 
-        # 6. Save Artifacts into PipelineContext
+        # 6. Validate Patch in Isolated Sandbox Environment
+        sandbox_env = SandboxExecutionEnvironment()
+        sandbox_result = sandbox_env.validate_patch_integrity(unified_diff)
+        context.set_artifact("sandbox_validation", sandbox_result)
+
+        # 7. Save Artifacts into PipelineContext
         context.set_artifact("implementation_diff", unified_diff)
         context.set_artifact("implementation.diff", unified_diff)
         context.set_artifact("schema_definitions", schema_definitions)
@@ -477,6 +483,7 @@ class CoderAgent(BaseAgent):
             "diff_file_generated": "artifacts/implementation.diff",
             "schema_file_generated": "artifacts/schema-definitions.json",
             "design_doc_generated": "artifacts/engineering-design.md",
+            "sandbox_validation": sandbox_result,
             "replan_applied": bool(replan_feedback),
         }
         context.set_artifact("implementation_summary", summary)

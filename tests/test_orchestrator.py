@@ -202,3 +202,15 @@ def test_rollback_controller(tmp_path):
     assert test_file.read_text(encoding="utf-8") == "ORIGINAL_CONTENT"
     assert ctx.status == TaskStatus.ROLLED_BACK
     assert ctx.rollbacks_count == 1
+
+
+def test_sandbox_execution_environment(tmp_path):
+    from src.orchestrator.sandbox import SandboxExecutionEnvironment
+
+    sandbox = SandboxExecutionEnvironment(sandbox_dir=tmp_path / "sandbox")
+    result = sandbox.validate_patch_integrity("diff --git a/test.py b/test.py")
+    assert result["valid"] is True
+    assert result["modules_verified"] > 0
+    assert result["isolation_status"] == "ZERO_BASELINE_MUTATION"
+    sandbox.cleanup()
+
