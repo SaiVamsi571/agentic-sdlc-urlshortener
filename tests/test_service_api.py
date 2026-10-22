@@ -102,3 +102,23 @@ def test_expired_url_410(client):
     res_expired = client.get(f"/{short_code}", follow_redirects=False)
     assert res_expired.status_code == 410
     assert "expired" in res_expired.json()["detail"].lower()
+
+def test_redirect_simulate_click(client):
+    res_create = client.post("/api/v1/shorten", json={
+        "original_url": "https://www.example.com/simulate"
+    })
+    short_code = res_create.json()["short_code"]
+
+    # Simulated click returns 200 JSON with target URL instead of 307
+    res_sim = client.get(f"/{short_code}?simulate=true")
+    assert res_sim.status_code == 200
+    data = res_sim.json()
+    assert data["status"] == "CLICK_RECORDED"
+    assert data["short_code"] == short_code
+    assert data["target_url"] == "https://www.example.com/simulate"
+
+    # Verify analytics counter incremented
+    res_analytics = client.get(f"/api/v1/analytics/{short_code}")
+    assert res_analytics.status_code == 200
+    assert res_analytics.json()["total_clicks"] >= 1
+

@@ -532,13 +532,19 @@ async function handleSimulateClick() {
     return;
   }
   try {
-    const res = await fetch(`/shortener/${lastShortCode}`, {
+    const res = await fetch(`/shortener/${lastShortCode}?simulate=true`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
-        "Referer": "https://example.com/dashboard"
+        "Referer": "https://example.com/dashboard",
+        "X-Simulate": "true"
       }
     });
-    appendLog("INFO", "CLICK_SIMULATOR", `Click recorded for [${lastShortCode}]. Status: ${res.status}`);
+    if (res.ok) {
+      const data = await res.json();
+      appendLog("INFO", "CLICK_SIMULATOR", `Click hop recorded for [${lastShortCode}] -> 307 Redirect target: ${data.target_url}`);
+    } else {
+      appendLog("WARN", "CLICK_SIMULATOR", `Click recorded for [${lastShortCode}]. Status: ${res.status}`);
+    }
     fetchAnalytics();
   } catch (err) {
     console.error(err);
@@ -863,24 +869,168 @@ async function showReportModal() {
   const modal = document.getElementById("report-modal");
   const content = document.getElementById("report-content");
   modal.classList.add("active");
-  content.textContent = "Loading engineering run report from artifacts/engineering-summary.md...";
+  content.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-style: italic;">Loading engineering run report from artifacts/engineering-summary.md...</div>';
   try {
     const res = await fetch("/api/pipeline/report");
     if (res.ok) {
       const data = await res.json();
-      if (data.status === "AVAILABLE") {
-        content.textContent = data.report_markdown;
+      if (data.status === "AVAILABLE" && data.report_markdown) {
+        content.innerHTML = renderMarkdownToHtml(data.report_markdown);
       } else {
-        content.textContent = "No engineering report has been generated yet. Run a pipeline scenario (e.g. Run Greenfield) to produce artifacts.";
+        content.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">No engineering report has been generated yet. Run a pipeline scenario (e.g. Run Greenfield) to produce artifacts.</div>';
       }
     } else {
-      content.textContent = "Error fetching engineering report.";
+      content.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--accent-rose);">Error fetching engineering report from server.</div>';
     }
   } catch (err) {
-    content.textContent = "Failed to load report: " + err;
+    content.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--accent-rose);">Failed to load report: ' + err.message + '</div>';
   }
 }
 
 function hideReportModal() {
   document.getElementById("report-modal").classList.remove("active");
+}
+
+function renderMarkdownToHtml(md) {
+  if (!md) return "<p>No content available.</p>";
+
+  const lines = md.split("\n");
+  const html = [];
+  let inTable = false;
+  let inUl = false;
+  let inOl = false;
+
+  function closeLists() {
+    if (inUl) { html.push("</ul>"); inUl = false; }
+    if (inOl) { html.push("</ol>"); inOl = false; }
+  }
+
+  function closeTable() {
+    if (inTable) { html.push("</tbody></table></div>"); inTable = false; }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const line = rawLine.trim();
+
+    // Table rows: | Cell 1 | Cell 2 |
+    if (line.startsWith("|") && line.endsWith("|")) {
+      closeLists();
+      const cells = line.split("|").slice(1, -1).map(c => c.trim());
+      // Skip delimiter row e.g. | :--- | :--- |
+      if (cells.every(c => /^:?-+:?$/.test(c))) {
+        continue;
+      }
+      if (!inTable) {
+        inTable = true;
+        html.push('<div class="report-table-wrapper"><table class="report-table"><thead><tr>');
+        cells.forEach(c => html.push(`<th>${formatInline(c)}</th>`));
+        html.push('</tr></thead><tbody>');
+      } else {
+        html.push('<tr>');
+        cells.forEach(c => html.push(`<td>${formatInline(c)}</td>`));
+        html.push('</tr>');
+      }
+      continue;
+    } else {
+      closeTable();
+    }
+
+    if (!line) {
+      closeLists();
+      continue;
+    }
+
+    // Horizontal dividers
+    if (line === "---" || line === "***" || line === "___") {
+      closeLists();
+      html.push('<hr class="report-divider" />');
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith("### ")) {
+      closeLists();
+      html.push(`<h4 class="report-h4">${formatInline(line.substring(4))}</h4>`);
+      continue;
+    }
+    if (line.startsWith("## ")) {
+      closeLists();
+      html.push(`<h3 class="report-h3">${formatInline(line.substring(3))}</h3>`);
+      continue;
+    }
+    if (line.startsWith("# ")) {
+      closeLists();
+      html.push(`<h2 class="report-h2">${formatInline(line.substring(2))}</h2>`);
+      continue;
+    }
+
+    // Task list items: - [x] or - [ ]
+    const taskMatch = line.match(/^[-*]\s+\[([ xX])\]\s+(.*)$/);
+    if (taskMatch) {
+      if (inOl) { html.push("</ol>"); inOl = false; }
+      if (!inUl) { html.push('<ul class="report-list task-list">'); inUl = true; }
+      const isChecked = taskMatch[1].toLowerCase() === "x";
+      const badge = isChecked
+        ? '<span class="task-badge checked">[PASSED]</span>'
+        : '<span class="task-badge">[PENDING]</span>';
+      html.push(`<li>${badge} ${formatInline(taskMatch[2])}</li>`);
+      continue;
+    }
+
+    // Unordered list items: - or *
+    const ulMatch = line.match(/^[-*]\s+(.*)$/);
+    if (ulMatch) {
+      if (inOl) { html.push("</ol>"); inOl = false; }
+      if (!inUl) { html.push('<ul class="report-list">'); inUl = true; }
+      html.push(`<li>${formatInline(ulMatch[1])}</li>`);
+      continue;
+    }
+
+    // Ordered list items: 1. 2. etc.
+    const olMatch = line.match(/^\d+\.\s+(.*)$/);
+    if (olMatch) {
+      if (inUl) { html.push("</ul>"); inUl = false; }
+      if (!inOl) { html.push('<ol class="report-list">'); inOl = true; }
+      html.push(`<li>${formatInline(olMatch[1])}</li>`);
+      continue;
+    }
+
+    // Regular text paragraph
+    closeLists();
+    html.push(`<p class="report-p">${formatInline(line)}</p>`);
+  }
+
+  closeLists();
+  closeTable();
+
+  return html.join("\n");
+}
+
+function formatInline(text) {
+  if (!text) return "";
+  let out = text;
+
+  // Basic HTML entity escaping
+  out = out.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // Bold + Code: **`code`**
+  out = out.replace(/\*\*`([^`]+)`\*\*/g, '<strong><code class="report-code">$1</code></strong>');
+
+  // Bold: **text**
+  out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+
+  // Italic: *text* (excluding asterisks in bold)
+  out = out.replace(/(^|[^*])\*([^*]+)\*([^*]|$)/g, "$1<em>$2</em>$3");
+
+  // Inline code: `code`
+  out = out.replace(/`([^`]+)`/g, '<code class="report-code">$1</code>');
+
+  // Markdown links: [label](url)
+  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="report-link" target="_blank" rel="noopener">$1</a>');
+
+  // Status highlights
+  out = out.replace(/RELEASE_READY/g, '<span class="status-pill status-ready">RELEASE_READY</span>');
+
+  return out;
 }
