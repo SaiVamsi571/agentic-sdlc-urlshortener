@@ -4,6 +4,8 @@ Takes a vague, underspecified stakeholder prompt, computes multi-dimensional amb
 executes an interactive clarification gate, normalizes into canonical engineering specifications,
 and safely executes the workflow.
 """
+
+from __future__ import annotations
 import asyncio
 from typing import Callable, Optional
 from src.agents.architecture_agent import ArchitectureAgent

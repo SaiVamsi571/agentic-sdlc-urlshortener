@@ -8,6 +8,8 @@ Generates production-quality engineering outputs:
   - Unit/integration test traceability mapping
   - AST-driven code quality and type safety verification
 """
+
+from __future__ import annotations
 import ast
 import json
 from pathlib import Path

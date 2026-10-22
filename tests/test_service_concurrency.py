@@ -2,6 +2,8 @@
 Concurrency Stress Tests for URL Shortener Service.
 Validates thread-safety, race condition avoidance, and locking integrity under concurrent workloads.
 """
+
+from __future__ import annotations
 import concurrent.futures
 from src.service.models import ShortenRequest
 from src.service.service import URLShortenerService

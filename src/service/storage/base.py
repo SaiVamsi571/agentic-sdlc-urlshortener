@@ -1,6 +1,8 @@
 """
 Repository Abstract Base Interface for URL Shortener Service.
 """
+
+from __future__ import annotations
 import abc
 from typing import Any, Dict, List, Optional
 from src.service.models import AnalyticsSummary, ClickEventRecord, ShortURLRecord, SystemStats

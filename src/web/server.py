@@ -3,6 +3,8 @@ Web Server for AetherSDLC Orchestration Dashboard.
 Provides REST endpoints and Server-Sent Events (SSE) for real-time DAG visualization,
 HITL interactive approval, blast-radius exploration, and live URL Shortener playground.
 """
+
+from __future__ import annotations
 import asyncio
 import json
 import time

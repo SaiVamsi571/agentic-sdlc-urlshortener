@@ -2,6 +2,8 @@
 OpenAI LLM Integration Client.
 Provides async text and structured generation with automatic fallback to deterministic simulation.
 """
+
+from __future__ import annotations
 import os
 import json
 import logging

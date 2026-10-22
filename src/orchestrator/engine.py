@@ -3,6 +3,8 @@ Core Stateful DAG Orchestration Engine.
 Coordinates parallel/sequential agent execution, synchronization barriers,
 entry/exit gates, HITL approval checkpoints, dynamic re-planning, and metrics collection.
 """
+
+from __future__ import annotations
 import asyncio
 import time
 from typing import Any, Callable, Dict, List, Optional

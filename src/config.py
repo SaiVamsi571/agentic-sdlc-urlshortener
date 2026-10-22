@@ -2,6 +2,8 @@
 Agentic SDLC System - Global Configuration.
 Configures paths, autonomous execution limits, policy guardrails, and HITL thresholds.
 """
+
+from __future__ import annotations
 import os
 from pathlib import Path
 

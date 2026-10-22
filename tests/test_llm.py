@@ -2,6 +2,8 @@
 Tests for LLM Client, Validation, Quota Handling, and Fallback Engine.
 Validates OpenAI integration, key validation, error codes, and dynamic configuration.
 """
+
+from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import ASGITransport, AsyncClient

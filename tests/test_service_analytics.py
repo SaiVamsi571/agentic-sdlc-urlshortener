@@ -1,6 +1,8 @@
 """
 Tests for GDPR-Compliant Click Analytics, Device Parsing, and Aggregation Reporting.
 """
+
+from __future__ import annotations
 from fastapi.testclient import TestClient
 import pytest
 from src.service.app import create_app

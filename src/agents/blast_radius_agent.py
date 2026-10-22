@@ -3,6 +3,8 @@ Blast Radius and Codebase Reasoning Agent (Brownfield Analysis).
 Uses Python AST (Abstract Syntax Tree) to parse the existing codebase, map symbol dependencies,
 and evaluate the architectural blast radius and backwards-compatibility risk of proposed changes.
 """
+
+from __future__ import annotations
 import ast
 from pathlib import Path
 from typing import Any, Dict, List, Set

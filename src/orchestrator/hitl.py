@@ -3,6 +3,8 @@ Human-In-The-Loop (HITL) Governance & Checkpoint Controller.
 Enforces human sign-off for high-impact actions (schema migrations, breaking changes, release readiness).
 Supports asynchronous pause/resume, diff inspection, and review lineage.
 """
+
+from __future__ import annotations
 import asyncio
 from typing import Any, Callable, Dict, Optional
 from pydantic import BaseModel, Field

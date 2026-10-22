@@ -3,6 +3,8 @@ Dynamic Re-planning and Feedback Loop Controller.
 Enables non-linear, stateful self-healing when upstream outputs change or downstream tests/gates fail.
 Avoids restart from scratch by isolating affected subgraphs.
 """
+
+from __future__ import annotations
 from typing import Any, Dict, List, Optional, Set
 from pydantic import BaseModel, Field
 from src.orchestrator.graph import ExecutionGraph

@@ -2,6 +2,8 @@
 Core URL Shortener Service Facade.
 Coordinates Encoding, Validation, Caching, Persistence, and GDPR-Compliant Analytics Tracking.
 """
+
+from __future__ import annotations
 import hashlib
 import re
 import uuid

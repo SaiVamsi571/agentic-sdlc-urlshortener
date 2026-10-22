@@ -2,6 +2,8 @@
 Architecture & System Design Agent.
 Synthesizes Architectural Decision Records (ADRs), component diagrams, data models, and API contracts.
 """
+
+from __future__ import annotations
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent
 from src.constants import (

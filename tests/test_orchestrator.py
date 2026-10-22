@@ -3,6 +3,8 @@ Comprehensive Tests for the Agentic Orchestration Layer.
 Validates DAG scheduling, parallel layering, gates, HITL governance, dynamic re-planning,
 rollback safety, guardrails, and reliability metrics.
 """
+
+from __future__ import annotations
 import asyncio
 import pytest
 from pathlib import Path

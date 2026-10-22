@@ -2,6 +2,8 @@
 Thread-Safe SQLite Repository Implementation for URL Shortener.
 Uses parameterized queries exclusively to prevent SQL injection and enforce compliance.
 """
+
+from __future__ import annotations
 import json
 import sqlite3
 import threading

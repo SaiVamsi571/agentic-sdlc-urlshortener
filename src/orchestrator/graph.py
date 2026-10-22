@@ -2,6 +2,8 @@
 Explicit Dependency Graph (DAG) for SDLC Orchestration.
 Supports sequential and parallel paths with synchronization, entry/exit gates, and topological scheduling.
 """
+
+from __future__ import annotations
 import networkx as nx
 from typing import Any, Callable, Dict, List, Optional, Set
 from pydantic import BaseModel, ConfigDict, Field

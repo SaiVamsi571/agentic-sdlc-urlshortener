@@ -1,6 +1,8 @@
 """
 URL Shortening, Redirection, and Metadata Endpoints.
 """
+
+from __future__ import annotations
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from src.service.core.validator import ValidationError

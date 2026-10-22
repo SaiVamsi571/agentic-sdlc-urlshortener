@@ -3,6 +3,8 @@ Release Readiness and Governance Sign-Off Agent.
 Compiles release manifests, verifies quality gates, generates changelogs,
 produces persistent human-reviewable engineering run reports and artifacts.
 """
+
+from __future__ import annotations
 import json
 import time
 from pathlib import Path

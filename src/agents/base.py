@@ -2,6 +2,8 @@
 Base Agent Interface.
 Standardizes execution, performance measurement, decision lineage capture, and error handling.
 """
+
+from __future__ import annotations
 import abc
 import time
 from typing import Any, Dict, List, Optional

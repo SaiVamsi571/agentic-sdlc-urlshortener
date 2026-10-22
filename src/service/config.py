@@ -1,6 +1,8 @@
 """
 URL Shortener Service Configuration.
 """
+
+from __future__ import annotations
 import os
 
 from pydantic import BaseModel

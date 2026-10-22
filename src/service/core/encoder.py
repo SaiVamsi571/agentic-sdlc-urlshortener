@@ -2,6 +2,8 @@
 Base62 Encoding and MurmurHash3 Hashing with Collision Resolution Probing.
 Produces deterministic, uniformly distributed 7-character alphanumeric short codes.
 """
+
+from __future__ import annotations
 import hashlib
 from typing import Callable, Optional
 

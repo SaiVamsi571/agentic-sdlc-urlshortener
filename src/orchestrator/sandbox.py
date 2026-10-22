@@ -3,6 +3,8 @@ Isolated Sandbox Execution Environment.
 Provides non-destructive worktree validation for staged patches, ensuring code modifications
 are tested and verified in isolation before touching any active baseline source files.
 """
+
+from __future__ import annotations
 import ast
 from pathlib import Path
 import shutil

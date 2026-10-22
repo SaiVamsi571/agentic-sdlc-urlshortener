@@ -2,6 +2,8 @@
 State and Lineage Management for Agentic Orchestration.
 Maintains immutable snapshots, audit events, decision lineage, and cross-stage execution context.
 """
+
+from __future__ import annotations
 import json
 import time
 import uuid

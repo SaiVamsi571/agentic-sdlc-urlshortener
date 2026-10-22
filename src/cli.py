@@ -2,6 +2,8 @@
 Rich Terminal Command Line Interface (CLI) for AetherSDLC.
 Supports executing scenarios, inspecting DAG topologies, reviewing audit logs, and interactive HITL sign-offs.
 """
+
+from __future__ import annotations
 import argparse
 import asyncio
 import sys

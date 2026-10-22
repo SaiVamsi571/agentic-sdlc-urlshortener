@@ -1,6 +1,8 @@
 """
 URL Validation, SSRF Protection, Loop Detection, and Reserved Alias Filtering.
 """
+
+from __future__ import annotations
 import ipaddress
 import re
 from urllib.parse import urlparse

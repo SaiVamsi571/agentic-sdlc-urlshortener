@@ -1,6 +1,8 @@
 """
 Analytics and Observability Endpoints for URL Shortener Service.
 """
+
+from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.service.models import AnalyticsSummary, SystemStats
 from src.service.routers.url import get_service

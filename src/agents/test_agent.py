@@ -3,6 +3,8 @@ Automated Test Generation and Execution Agent.
 Executes Unit, Integration, Concurrency, and Contract tests, capturing assertion failures
 to drive the dynamic re-planning feedback loop.
 """
+
+from __future__ import annotations
 import subprocess
 import sys
 import time

@@ -2,6 +2,8 @@
 Rollback, File Checkpointing, and Safe-Stop Controller.
 Ensures zero partial-write corruption and supports deterministic state reversal upon failure or human rejection.
 """
+
+from __future__ import annotations
 import shutil
 import time
 from pathlib import Path

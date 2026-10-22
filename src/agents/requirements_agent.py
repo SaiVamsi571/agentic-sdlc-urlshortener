@@ -3,6 +3,8 @@ Requirements Engineering & Disambiguation Agent.
 Interprets user intent, scores ambiguity across 6 key architectural dimensions,
 resolves underspecified constraints, and normalizes into a formal Software Requirements Specification (SRS).
 """
+
+from __future__ import annotations
 import re
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent

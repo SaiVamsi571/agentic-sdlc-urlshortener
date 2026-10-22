@@ -2,6 +2,8 @@
 Enterprise Policy Guardrails for Security, Compliance, and Safe Change Control.
 Inspects generated code, schemas, and architecture before gates allow progression.
 """
+
+from __future__ import annotations
 import ast
 import re
 from typing import Any, Dict, List, Optional

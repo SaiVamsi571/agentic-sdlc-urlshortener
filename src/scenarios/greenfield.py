@@ -3,6 +3,8 @@ Scenario 1: Greenfield Implementation.
 Builds the complete URL shortener system from a clean-slate specification.
 Demonstrates requirement normalization, ADR formulation, parallel execution, testing, and release gating.
 """
+
+from __future__ import annotations
 import asyncio
 from typing import Callable, Optional
 from src.agents.architecture_agent import ArchitectureAgent

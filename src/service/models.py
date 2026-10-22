@@ -1,6 +1,8 @@
 """
 Domain Models and Data Transfer Objects (DTOs) for URL Shortener Service.
 """
+
+from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, HttpUrl

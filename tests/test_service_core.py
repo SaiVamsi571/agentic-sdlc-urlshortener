@@ -1,6 +1,8 @@
 """
 Unit Tests for URL Shortener Core Components (Encoder, Validator, Cache, RateLimiter).
 """
+
+from __future__ import annotations
 import time
 import pytest
 from src.service.core.encoder import Base62Encoder, encode_base62, hash_64bit

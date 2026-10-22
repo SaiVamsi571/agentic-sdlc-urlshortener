@@ -6,6 +6,8 @@ and domain-specific constants are defined here to avoid scattering
 raw literals throughout the codebase.
 """
 
+from __future__ import annotations
+
 # ─── Branding & Identity ───────────────────────────────────────────────
 APP_TITLE = "AetherSDLC - Agentic Software Engineering Orchestration System"
 APP_VERSION = "2.0.0"

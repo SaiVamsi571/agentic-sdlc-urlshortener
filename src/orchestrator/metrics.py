@@ -3,6 +3,8 @@ Reliability Metrics and Audit-Grade Observability Tracker.
 Calculates Success Rate, MTTR, Retry/Rollback Frequency, Latency, and Guardrail Interventions.
 Persists structured audit logs to JSONL for enterprise traceability.
 """
+
+from __future__ import annotations
 import json
 import time
 from pathlib import Path

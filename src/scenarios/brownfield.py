@@ -3,6 +3,8 @@ Scenario 2: Brownfield Enhancement & Refactoring.
 Adds Sliding-Window Rate Limiting and Granular Device/Referrer Click Analytics to the existing codebase.
 Demonstrates AST blast-radius reasoning, change-control guardrails, and HITL schema sign-off.
 """
+
+from __future__ import annotations
 import asyncio
 from typing import Callable, Optional
 from src.agents.blast_radius_agent import BlastRadiusAgent

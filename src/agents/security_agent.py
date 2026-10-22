@@ -3,6 +3,8 @@ Security & Compliance SAST Audit Agent.
 Executes static application security testing (SAST), secrets detection,
 PII/GDPR compliance verification, and SSRF guardrail audits.
 """
+
+from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent

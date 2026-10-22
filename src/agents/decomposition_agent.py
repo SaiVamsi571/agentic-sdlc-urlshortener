@@ -3,6 +3,8 @@ Task Decomposition and Execution Sequencing Agent.
 Converts high-level requirements and architecture into discrete, actionable tasks with explicit dependencies,
 concurrency groupings, and gate conditions.
 """
+
+from __future__ import annotations
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent
 from src.constants import AGENT_NAME_DECOMPOSITION

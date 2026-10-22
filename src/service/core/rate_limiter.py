@@ -2,6 +2,8 @@
 Sliding-Window In-Memory Rate Limiter.
 Enforces requests-per-minute limits per client IP to mitigate denial-of-service and brute-force scans.
 """
+
+from __future__ import annotations
 import threading
 import time
 from collections import defaultdict, deque

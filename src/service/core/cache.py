@@ -2,6 +2,8 @@
 Thread-Safe In-Memory LRU Cache with TTL Expiration.
 Minimizes database query load for popular redirect short codes.
 """
+
+from __future__ import annotations
 import threading
 import time
 from collections import OrderedDict
