@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 from src.agents.base import BaseAgent
 from src.config import BASE_DIR
 from src.constants import AGENT_NAME_SECURITY
+from src.llm import get_llm_client
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.guardrails import GuardrailEngine, GuardrailReport
 from src.orchestrator.state import AuditLevel, PipelineContext, SDLCPhase
@@ -46,6 +47,27 @@ class SecurityAgent(BaseAgent):
             "violations": [v.model_dump() for v in all_violations],
             "warnings": [w.model_dump() for w in all_warnings]
         }
+
+        # Dynamic LLM Threat Model (STRIDE)
+        llm = get_llm_client()
+        if llm.is_enabled:
+            system_prompt = (
+                "You are an enterprise Application Security Architect. "
+                "Evaluate the security posture of this Python URL shortener service "
+                "(which features SSRF validation, sliding-window rate limiting, and GDPR IP hashing). "
+                "Provide a concise STRIDE threat modeling summary. "
+                "Return a JSON object with keys: 'threat_model_summary' (string), 'identified_threats' (list of strings)."
+            )
+            threat_analysis = await llm.generate_json(system_prompt, f"Files scanned: {files_scanned}, violations: {len(all_violations)}")
+            if threat_analysis:
+                audit_result["threat_model"] = threat_analysis
+                context.add_audit_event(
+                    action="LLM_SECURITY_THREAT_MODEL",
+                    message=f"Agent '{self.name}' completed STRIDE threat analysis using OpenAI ({llm.model}).",
+                    node_id=node.id,
+                    phase=self.phase,
+                    metadata={"provider": "openai", "model": llm.model}
+                )
 
         context.set_artifact("security_guardrail_report", audit_result)
 

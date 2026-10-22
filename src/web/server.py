@@ -27,6 +27,7 @@ from src.constants import (
     SCENARIO_GREENFIELD,
     SCENARIO_PROMPTS,
 )
+from src.llm import get_llm_client, reload_llm_client
 from src.orchestrator.hitl import HITLManager
 from src.orchestrator.metrics import MetricsTracker
 from src.orchestrator.state import PipelineContext, TaskStatus
@@ -56,6 +57,12 @@ class HITLDecisionRequest(BaseModel):
     approved: bool
     reviewer: str = "LeadArchitect"
     comments: str = "Approved via dashboard"
+
+
+class ConfigureLLMRequest(BaseModel):
+    """Request body for configuring OpenAI API integration."""
+    api_key: str
+    model: Optional[str] = None
 
 
 def broadcast_event(event: Dict[str, Any]):
@@ -142,6 +149,32 @@ def create_dashboard_app() -> FastAPI:
             "status": "AVAILABLE",
             "report_markdown": report_path.read_text(encoding="utf-8"),
         }
+
+    @app.get("/api/pipeline/llm-status", tags=["LLM Engine"])
+    async def get_llm_status():
+        """Return the active AI engine status (OpenAI vs Deterministic Simulation)."""
+        llm = get_llm_client()
+        return llm.get_status()
+
+    @app.post("/api/pipeline/configure-llm", tags=["LLM Engine"])
+    async def configure_llm(req: ConfigureLLMRequest):
+        """Configure OpenAI API key and model dynamically without server restart."""
+        if not req.api_key or not req.api_key.strip():
+            raise HTTPException(status_code=400, detail="API key cannot be empty.")
+        
+        env_path = BASE_DIR / ".env"
+        lines = []
+        if env_path.exists():
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                if not line.startswith("OPENAI_API_KEY=") and not line.startswith("OPENAI_MODEL="):
+                    lines.append(line)
+        lines.append(f"OPENAI_API_KEY={req.api_key.strip()}")
+        if req.model:
+            lines.append(f"OPENAI_MODEL={req.model.strip()}")
+        env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        llm = reload_llm_client()
+        return llm.get_status()
 
     @app.get("/api/pipeline/events", tags=["Pipeline Orchestrator"])
     async def stream_events(request: Request):

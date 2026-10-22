@@ -18,6 +18,10 @@
       <h1>AetherSDLC Orchestration Engine</h1>
     </div>
     <div class="scenario-controls">
+      <div id="ai-engine-badge" class="ai-engine-badge" title="Click to view or configure OpenAI Engine">
+        <span class="ai-status-dot" id="ai-engine-dot"></span>
+        <span id="ai-engine-label">AI Engine: Checking...</span>
+      </div>
       <label
         style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); cursor: pointer;">
         <input type="checkbox" id="chk-auto-approve" checked>
@@ -272,7 +276,7 @@
           <img src="/static/assets/icon-report.svg" width="18" height="18" alt="Report">
           <span>Engineering Run Report</span>
         </h3>
-        <button class="btn btn-sm" id="btn-close-report" style="padding: 0.2rem 0.6rem; cursor: pointer;">✕</button>
+        <button class="btn btn-sm" id="btn-close-report" style="padding: 0.2rem 0.6rem; cursor: pointer;">&times;</button>
       </div>
       <div id="report-content"
         style="overflow-y: auto; flex: 1; padding: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary); white-space: pre-wrap; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 1rem;">
@@ -283,6 +287,41 @@
         <span style="font-size: 0.75rem; color: var(--text-muted);">Saved to
           <code>artifacts/engineering-summary.md</code></span>
         <button class="btn btn-primary" id="btn-dismiss-report">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Engine / OpenAI Configuration Modal -->
+  <div class="modal-overlay" id="llm-modal">
+    <div class="modal-content" style="max-width: 520px; width: 90%; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 0.5rem;">
+          <img src="/static/assets/icon-radar.svg" width="18" height="18" alt="AI Engine">
+          <span>OpenAI Agent Engine Configuration</span>
+        </h3>
+        <button class="btn btn-sm" id="btn-close-llm-modal" style="padding: 0.2rem 0.6rem; cursor: pointer;">&times;</button>
+      </div>
+      <div style="padding: 1.2rem; display: flex; flex-direction: column; gap: 14px;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+          Provide your OpenAI API key to enable live LLM reasoning, dynamic ADR synthesis, and STRIDE security audits across SDLC agents. If omitted, the deterministic simulation engine is used.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">OpenAI API Key</label>
+          <input type="password" id="input-openai-key" placeholder="sk-proj-..." style="font-family: var(--font-mono); font-size: 0.85rem; width: 100%; padding: 0.6rem 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--text-primary);">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Model Selection</label>
+          <select id="sel-openai-model" style="font-size: 0.85rem; width: 100%; padding: 0.6rem 0.8rem; border-radius: 8px; background: #0d121d; border: 1px solid var(--border-subtle); color: var(--text-primary);">
+            <option value="gpt-4o-mini">gpt-4o-mini (Fast & Cost Efficient)</option>
+            <option value="gpt-4o">gpt-4o (High Reasoning)</option>
+            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+          </select>
+        </div>
+        <div id="llm-modal-status" style="font-size: 0.8rem; color: var(--text-muted); min-height: 20px;"></div>
+      </div>
+      <div class="modal-actions" style="border-top: 1px solid var(--border-subtle); padding: 0.8rem 1.2rem; display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn" id="btn-cancel-llm-modal">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-llm-modal">Save & Activate</button>
       </div>
     </div>
   </div>

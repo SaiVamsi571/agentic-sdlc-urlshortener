@@ -616,7 +616,115 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-open-report").addEventListener("click", showReportModal);
   document.getElementById("btn-close-report").addEventListener("click", hideReportModal);
   document.getElementById("btn-dismiss-report").addEventListener("click", hideReportModal);
+
+  // AI Engine / LLM Configuration Listeners
+  checkLLMStatus();
+  const aiBadge = document.getElementById("ai-engine-badge");
+  if (aiBadge) aiBadge.addEventListener("click", showLLMModal);
+  const btnCloseLlm = document.getElementById("btn-close-llm-modal");
+  if (btnCloseLlm) btnCloseLlm.addEventListener("click", hideLLMModal);
+  const btnCancelLlm = document.getElementById("btn-cancel-llm-modal");
+  if (btnCancelLlm) btnCancelLlm.addEventListener("click", hideLLMModal);
+  const btnSaveLlm = document.getElementById("btn-save-llm-modal");
+  if (btnSaveLlm) btnSaveLlm.addEventListener("click", saveLLMConfig);
 });
+
+async function checkLLMStatus() {
+  const badge = document.getElementById("ai-engine-badge");
+  const label = document.getElementById("ai-engine-label");
+  if (!badge || !label) return;
+
+  try {
+    const res = await fetch("/api/pipeline/llm-status");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.enabled) {
+        badge.classList.add("active-openai");
+        label.textContent = `AI Engine: OpenAI (${data.model})`;
+        badge.title = `OpenAI LLM Engine active with model ${data.model}. Click to modify.`;
+      } else {
+        badge.classList.remove("active-openai");
+        label.textContent = "AI Engine: Simulation (Click to add key)";
+        badge.title = "Deterministic simulation active. Click to configure OpenAI API key.";
+      }
+    }
+  } catch (err) {
+    console.error("Failed to check LLM status", err);
+  }
+}
+
+function showLLMModal() {
+  const modal = document.getElementById("llm-modal");
+  if (modal) modal.classList.add("active");
+  const statusEl = document.getElementById("llm-modal-status");
+  if (statusEl) statusEl.textContent = "";
+}
+
+function hideLLMModal() {
+  const modal = document.getElementById("llm-modal");
+  if (modal) modal.classList.remove("active");
+}
+
+async function saveLLMConfig() {
+  const keyInput = document.getElementById("input-openai-key");
+  const modelSelect = document.getElementById("sel-openai-model");
+  const statusEl = document.getElementById("llm-modal-status");
+  const saveBtn = document.getElementById("btn-save-llm-modal");
+
+  const apiKey = keyInput ? keyInput.value.trim() : "";
+  const model = modelSelect ? modelSelect.value : "gpt-4o-mini";
+
+  if (!apiKey) {
+    if (statusEl) {
+      statusEl.style.color = "var(--accent-rose)";
+      statusEl.textContent = "Please enter an OpenAI API key.";
+    }
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving...";
+  if (statusEl) {
+    statusEl.style.color = "var(--text-muted)";
+    statusEl.textContent = "Activating OpenAI integration...";
+  }
+
+  try {
+    const res = await fetch("/api/pipeline/configure-llm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: apiKey, model: model })
+    });
+
+    if (res.ok) {
+      const result = await res.json();
+      if (statusEl) {
+        statusEl.style.color = "var(--accent-emerald)";
+        statusEl.textContent = "OpenAI key activated successfully!";
+      }
+      checkLLMStatus();
+      appendLog("INFO", "ORCHESTRATOR", `OpenAI LLM Engine configured with model: ${result.model}`);
+      setTimeout(() => {
+        hideLLMModal();
+        if (keyInput) keyInput.value = "";
+      }, 1000);
+    } else {
+      const err = await res.json();
+      if (statusEl) {
+        statusEl.style.color = "var(--accent-rose)";
+        statusEl.textContent = `Error: ${err.detail || "Failed to configure LLM."}`;
+      }
+    }
+  } catch (err) {
+    if (statusEl) {
+      statusEl.style.color = "var(--accent-rose)";
+      statusEl.textContent = `Network error: ${err.message}`;
+    }
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save & Activate";
+  }
+}
 
 async function showReportModal() {
   const modal = document.getElementById("report-modal");

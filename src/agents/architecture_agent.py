@@ -10,6 +10,7 @@ from src.constants import (
     SERVICE_DESCRIPTION,
     SERVICE_TITLE,
 )
+from src.llm import get_llm_client
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import PipelineContext, SDLCPhase
 
@@ -58,6 +59,35 @@ class ArchitectureAgent(BaseAgent):
                 "consequences": "Enables accurate unique visitor count calculation while maintaining zero PII liability."
             }
         ]
+
+        # Dynamic LLM Architectural Synthesis
+        llm = get_llm_client()
+        if llm.is_enabled:
+            system_prompt = (
+                "You are a Principal Software Architect. Review this enterprise URL shortener design. "
+                "Provide an additional architectural recommendation addressing horizontal scale, "
+                "caching, or disaster recovery. Return a JSON object with keys: "
+                "'title' (string), 'context' (string), 'decision' (string), 'consequences' (string)."
+            )
+            llm_adr = await llm.generate_json(system_prompt, f"Scenario requirements: {srs}")
+            if llm_adr and "title" in llm_adr and "decision" in llm_adr:
+                adrs.append({
+                    "id": f"ADR-{len(adrs)+1:03d}",
+                    "title": llm_adr["title"],
+                    "status": "ACCEPTED",
+                    "context": llm_adr.get("context", "Identified via OpenAI Architecture Analysis"),
+                    "decision": llm_adr["decision"],
+                    "alternatives": llm_adr.get("alternatives", ["Status quo"]),
+                    "consequences": llm_adr.get("consequences", "Improved resilience and maintainability.")
+                })
+                context.add_audit_event(
+                    action="LLM_ARCHITECTURE_SYNTHESIS",
+                    message=f"Agent '{self.name}' synthesized an additional ADR using OpenAI ({llm.model}).",
+                    node_id=node.id,
+                    phase=self.phase,
+                    agent_name=self.name,
+                    metadata={"provider": "openai", "model": llm.model, "adr_title": llm_adr["title"]}
+                )
 
         api_spec = {
             "openapi": OPENAPI_VERSION,

@@ -646,3 +646,39 @@ header {
     grid-template-columns: 1fr;
   }
 }
+
+/* AI Engine Status Badge */
+.ai-engine-badge {
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.ai-engine-badge:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 210, 255, 0.08);
+}
+.ai-engine-badge.active-openai {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+.ai-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: all 0.3s ease;
+}
+.active-openai .ai-status-dot {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}

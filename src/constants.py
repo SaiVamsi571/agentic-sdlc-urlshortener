@@ -234,3 +234,12 @@ MSG_ALIAS_CONFLICT = "Custom alias '{alias}' is already in use."
 MSG_ALIAS_RESERVED = "Custom alias '{alias}' is reserved by system."
 MSG_RATE_LIMIT_EXCEEDED = "Rate limit exceeded. Try again in {seconds} seconds."
 
+# ─── LLM & OpenAI Configuration Constants ─────────────────────────────
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
+ENV_OPENAI_MODEL = "OPENAI_MODEL"
+AI_ENGINE_OPENAI = "OpenAI LLM Engine"
+AI_ENGINE_DETERMINISTIC = "Deterministic Simulation Engine"
+MSG_LLM_INITIALIZED = "OpenAI LLM client initialized with model '{model}'."
+MSG_LLM_FALLBACK = "OpenAI key not found or error occurred; falling back to deterministic engine."
+

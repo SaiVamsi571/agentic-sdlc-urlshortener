@@ -11,6 +11,7 @@ from src.constants import (
     STATUS_NORMALIZED,
     STATUS_NORMALIZED_AND_LOCKED,
 )
+from src.llm import get_llm_client
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import PipelineContext, SDLCPhase
 
@@ -21,6 +22,28 @@ class RequirementsAgent(BaseAgent):
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
         prompt = context.requirement_prompt or "Build a high-performance URL shortener service."
         
+        # Check if OpenAI LLM is enabled
+        llm = get_llm_client()
+        llm_insights = None
+        if llm.is_enabled:
+            system_prompt = (
+                "You are an expert Requirements Analyst for enterprise software systems. "
+                "Analyze the user's high-level requirement for an enterprise URL shortener service. "
+                "Detect ambiguity, identify missing constraints, and suggest edge-case considerations. "
+                "Return a JSON object with keys: 'ambiguity_analysis' (string), 'edge_cases' (list of strings), "
+                "and 'recommended_constraints' (list of strings)."
+            )
+            llm_insights = await llm.generate_json(system_prompt, f"User Requirement: {prompt}")
+            if llm_insights:
+                context.add_audit_event(
+                    action="LLM_REASONING_COMPLETED",
+                    message=f"Agent '{self.name}' completed dynamic requirements reasoning using OpenAI ({llm.model}).",
+                    node_id=node.id,
+                    phase=self.phase,
+                    agent_name=self.name,
+                    metadata={"provider": "openai", "model": llm.model}
+                )
+
         # 1. Ambiguity Scoring across 6 enterprise dimensions
         ambiguities = []
         clarifications = []
@@ -146,6 +169,8 @@ class RequirementsAgent(BaseAgent):
             ],
             "assumptions_locked": [a["default_assumption"] for a in ambiguities]
         }
+        if llm_insights:
+            normalized_srs["llm_insights"] = llm_insights
 
         # Save to context
         context.set_artifact("requirements_srs", normalized_srs)

@@ -41,6 +41,11 @@ htmlcov/
 *.swp
 *.swo
 
+# Environment & secrets
+.env
+*.env
+.env.local
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -43,6 +43,7 @@ from src.constants import (
     TITLE_ROLLBACK_STATUS,
     TITLE_TESTS_EXECUTED,
 )
+from src.llm import get_llm_client
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import AuditLevel, PipelineContext, SDLCPhase
 
@@ -115,6 +116,27 @@ class ReleaseAgent(BaseAgent):
                 "estimated_recovery_time_sec": ROLLBACK_RECOVERY_TIME_SEC,
             },
         }
+
+        # Dynamic LLM Executive Commentary
+        llm = get_llm_client()
+        if llm.is_enabled:
+            system_prompt = (
+                "You are an Executive Release Manager for an enterprise software engineering system. "
+                "Synthesize a concise 2-sentence release verdict and governance sign-off rationale for the URL shortener pipeline."
+            )
+            llm_synthesis = await llm.generate_text(
+                system_prompt,
+                f"Release Status: {status}, Checklist: {checklist}, Tests Passed: {test_rep.get('passed_tests', 0)}"
+            )
+            if llm_synthesis:
+                release_manifest["llm_executive_synthesis"] = llm_synthesis
+                context.add_audit_event(
+                    action="LLM_RELEASE_SYNTHESIS",
+                    message=f"Agent '{self.name}' generated executive release sign-off using OpenAI ({llm.model}).",
+                    node_id=node.id,
+                    phase=self.phase,
+                    metadata={"provider": "openai", "model": llm.model}
+                )
 
         context.set_artifact("release_manifest", release_manifest)
 
@@ -211,6 +233,7 @@ class ReleaseAgent(BaseAgent):
 | **Security SAST** | **{sec_rep.get('total_violations', 0)} Violations** | Cleared OWASP Top 10, SSRF, SQLi, and GDPR checks |
 | **Retries / Replans** | **{replan_text}** | Bounded self-healing loop |
 | **Release Status** | **`{manifest['status']}`** | Certified by {self.name} |
+{f"> **OpenAI Executive Synthesis**: {manifest['llm_executive_synthesis']}" if manifest.get('llm_executive_synthesis') else ""}
 
 ---
 
