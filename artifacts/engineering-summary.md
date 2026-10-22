@@ -1,7 +1,7 @@
 # Engineering Run Report
-**Scenario**: GREENFIELD
-**Pipeline ID**: `d4a0e43b-14f4-4a79-9457-db4cab106126`
-**Generated At**: 2026-10-22 14:17:36 UTC
+**Scenario**: BROWNFIELD
+**Pipeline ID**: `a51db3b1-1afb-4eea-8054-09a1b07fbdc8`
+**Generated At**: 2026-10-22 15:08:39 UTC
 **Target Domain**: Enterprise URL Shortener Service
 
 ---
@@ -9,8 +9,8 @@
 ## Executive Snapshot
 | Metric | Result | Evidence / Notes |
 | :--- | :--- | :--- |
-| **Tasks Completed** | **7 / 8** | 100% DAG execution across synchronization layers |
-| **Test Result** | **37 / 37 Passed** | Executed in 6.27s via pytest subprocess |
+| **Tasks Completed** | **6 / 7** | 100% DAG execution across synchronization layers |
+| **Test Result** | **45 / 45 Passed** | Executed in 7.48s via pytest subprocess |
 | **Security SAST** | **0 Violations** | Cleared OWASP Top 10, SSRF, SQLi, and GDPR checks |
 | **Retries / Replans** | **0 (Zero retries required, first-pass pass)** | Bounded self-healing loop |
 | **Release Status** | **`RELEASE_READY`** | Certified by ReleaseManagerAgent |
@@ -67,10 +67,10 @@ All artifacts are persisted under `/artifacts` for audit and review:
 
 ## Tests Executed & Results
 The `QualityAssuranceTestAgent` ran the complete test suite under `tests/`:
-* **Total Tests Executed**: `37`
-* **Passed**: `37`
+* **Total Tests Executed**: `45`
+* **Passed**: `45`
 * **Failed**: `0`
-* **Execution Duration**: `6.27s`
+* **Execution Duration**: `7.48s`
 * **Key Test Suites**:
   - `test_service_core.py`: Base62 encoding, Murmur3 hashing, SSRF protection, LRU cache TTL.
   - `test_service_api.py`: FastAPI endpoints, 307 redirect, 404 missing, 410 expired, 409 conflict.
@@ -100,7 +100,7 @@ The `QualityAssuranceTestAgent` ran the complete test suite under `tests/`:
 ---
 
 ## Human-in-the-Loop Governance Decisions
-- **Governance Checkpoint: Governance & Architecture Review Sign-Off**: `APPROVED` by **System-AutoGovernance** at 2026-10-22 14:17:36. Comments: *"Auto-approved by policy rule (risk acceptable for non-production run)"*
+- **Governance Checkpoint: HITL Change Control & Blast Radius Sign-Off**: `APPROVED` by **LeadArchitect-UI** at 2026-10-22 15:08:31. Comments: *"Approved via Interactive Dashboard"*
 
 
 ---

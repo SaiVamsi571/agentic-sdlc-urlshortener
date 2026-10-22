@@ -99,3 +99,91 @@ Server-Sent Events (SSE) streaming real-time DAG node updates, metrics, and logs
 
 ### `GET /api/pipeline/blast-radius`
 Runs live Python AST analysis on `src/service/` and returns the codebase blast radius report.
+
+---
+
+## 3. LLM Engine & Provider Configuration
+
+### `GET /api/pipeline/llm-status`
+Retrieves current LLM engine status, active operational mode, selected model, and whether an API key is configured.
+* **Response `200 OK`**:
+  ```json
+  {
+    "enabled": true,
+    "model": "gpt-4o-mini",
+    "mode": "live",
+    "has_key": true
+  }
+  ```
+
+---
+
+### `POST /api/pipeline/validate-llm-key`
+Strictly validates an OpenAI API key against the OpenAI API, executes a probe completion, and retrieves the list of authorized models.
+* **Request Body**:
+  ```json
+  {
+    "api_key": "sk-proj-..."
+  }
+  ```
+* **Response `200 OK` (Valid Key)**:
+  ```json
+  {
+    "valid": true,
+    "models": ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
+    "message": "API key successfully verified. 3 models available."
+  }
+  ```
+* **Error Response `400 Bad Request` (Invalid Key)**:
+  ```json
+  {
+    "detail": {
+      "code": "INVALID_KEY",
+      "message": "Invalid API key provided. Authentication failed with OpenAI API."
+    }
+  }
+  ```
+* **Error Response `429 Too Many Requests` (Quota Exhausted)**:
+  ```json
+  {
+    "detail": {
+      "code": "QUOTA_EXHAUSTED",
+      "message": "OpenAI API quota exhausted. Please check your billing plan."
+    }
+  }
+  ```
+
+---
+
+### `POST /api/pipeline/configure-llm`
+Configures and activates Live AI mode with the specified OpenAI key and selected model. Validates credentials prior to configuration.
+* **Request Body**:
+  ```json
+  {
+    "api_key": "sk-proj-...",
+    "model": "gpt-4o-mini"
+  }
+  ```
+* **Response `200 OK`**:
+  ```json
+  {
+    "status": "CONFIGURED",
+    "mode": "live",
+    "model": "gpt-4o-mini",
+    "message": "LLM engine active with model gpt-4o-mini."
+  }
+  ```
+
+---
+
+### `POST /api/pipeline/reset-llm`
+Resets the AI engine back to Deterministic Simulation Mode and removes active in-memory API key references.
+* **Response `200 OK`**:
+  ```json
+  {
+    "status": "RESET",
+    "mode": "deterministic",
+    "message": "AI Engine successfully reset to Deterministic Simulation Mode."
+  }
+  ```
+
