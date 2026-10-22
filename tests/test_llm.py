@@ -1,17 +1,23 @@
 """
-Tests for LLM Client and Fallback Engine.
-Validates OpenAI integration, fallback resilience, and dynamic configuration.
+Tests for LLM Client, Validation, Quota Handling, and Fallback Engine.
+Validates OpenAI integration, key validation, error codes, and dynamic configuration.
 """
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import ASGITransport, AsyncClient
 
 from src.constants import (
     AI_ENGINE_DETERMINISTIC,
     AI_ENGINE_OPENAI,
     DEFAULT_OPENAI_MODEL,
+    ERROR_CODE_EMPTY_KEY,
+    ERROR_CODE_INVALID_KEY,
+    ERROR_CODE_QUOTA_EXHAUSTED,
+    MSG_API_KEY_EMPTY,
+    MSG_API_KEY_INVALID,
+    MSG_QUOTA_EXHAUSTED,
 )
-from src.llm.client import LLMClient
+from src.llm.client import LLMClient, validate_api_key
 from src.web.server import dashboard_app
 
 
@@ -109,6 +115,103 @@ def test_llm_client_error_fallback(monkeypatch):
     asyncio.run(_inner())
 
 
+def test_validate_api_key_empty():
+    """Verify empty or placeholder key returns error."""
+    async def _inner():
+        res1 = await validate_api_key("")
+        assert res1["valid"] is False
+        assert res1["error_code"] == ERROR_CODE_EMPTY_KEY
+
+        res2 = await validate_api_key("your_openai_api_key_here")
+        assert res2["valid"] is False
+        assert res2["error_code"] == ERROR_CODE_EMPTY_KEY
+
+    asyncio.run(_inner())
+
+
+def test_validate_api_key_invalid():
+    """Verify invalid key raising AuthenticationError returns INVALID_KEY."""
+    async def _inner():
+        from openai import AuthenticationError
+
+        with patch("openai.AsyncOpenAI") as mock_cls:
+            mock_inst = MagicMock()
+            mock_inst.models.list = AsyncMock(side_effect=AuthenticationError(
+                message="Incorrect API key provided",
+                response=MagicMock(status_code=401),
+                body=None
+            ))
+            mock_cls.return_value = mock_inst
+
+            res = await validate_api_key("sk-invalid-test-key")
+            assert res["valid"] is False
+            assert res["error_code"] == ERROR_CODE_INVALID_KEY
+            assert res["message"] == MSG_API_KEY_INVALID
+
+    asyncio.run(_inner())
+
+
+def test_validate_api_key_quota_exhausted():
+    """Verify quota exhausted error triggers QUOTA_EXHAUSTED."""
+    async def _inner():
+        from openai import RateLimitError
+
+        with patch("openai.AsyncOpenAI") as mock_cls:
+            mock_inst = MagicMock()
+            
+            # models.list succeeds
+            m1 = MagicMock(); m1.id = "gpt-4o-mini"
+            mock_models_resp = MagicMock()
+            mock_models_resp.data = [m1]
+            mock_inst.models.list = AsyncMock(return_value=mock_models_resp)
+
+            # probe completion fails with quota error
+            mock_inst.chat.completions.create = AsyncMock(side_effect=RateLimitError(
+                message="You exceeded your current quota, please check your plan and billing details.",
+                response=MagicMock(status_code=429),
+                body=None
+            ))
+            mock_cls.return_value = mock_inst
+
+            res = await validate_api_key("sk-valid-key-but-no-quota")
+            assert res["valid"] is False
+            assert res["error_code"] == ERROR_CODE_QUOTA_EXHAUSTED
+            assert res["message"] == MSG_QUOTA_EXHAUSTED
+
+    asyncio.run(_inner())
+
+
+def test_validate_api_key_valid():
+    """Verify valid key returns available models sorted correctly."""
+    async def _inner():
+        with patch("openai.AsyncOpenAI") as mock_cls:
+            mock_inst = MagicMock()
+            
+            m1 = MagicMock(); m1.id = "gpt-4o"
+            m2 = MagicMock(); m2.id = "gpt-4o-mini"
+            m3 = MagicMock(); m3.id = "text-embedding-3-small"  # should be excluded
+            mock_models_resp = MagicMock()
+            mock_models_resp.data = [m1, m2, m3]
+            mock_inst.models.list = AsyncMock(return_value=mock_models_resp)
+
+            # Probe completion succeeds
+            mock_choice = MagicMock()
+            mock_choice.message.content = "pong"
+            mock_resp = MagicMock()
+            mock_resp.choices = [mock_choice]
+            mock_inst.chat.completions.create = AsyncMock(return_value=mock_resp)
+            mock_cls.return_value = mock_inst
+
+            res = await validate_api_key("sk-fully-valid-key")
+            assert res["valid"] is True
+            assert res["error_code"] is None
+            assert "gpt-4o-mini" in res["models"]
+            assert "gpt-4o" in res["models"]
+            assert "text-embedding-3-small" not in res["models"]
+
+    asyncio.run(_inner())
+
+
 def test_api_endpoint_llm_status():
     """Verify FastAPI endpoint GET /api/pipeline/llm-status returns valid structure."""
     async def _inner():
@@ -121,5 +224,33 @@ def test_api_endpoint_llm_status():
             assert "engine" in data
             assert "model" in data
             assert "provider" in data
+
+    asyncio.run(_inner())
+
+
+def test_api_endpoint_validate_key():
+    """Verify FastAPI endpoint POST /api/pipeline/validate-llm-key rejects empty key."""
+    async def _inner():
+        transport = ASGITransport(app=dashboard_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            response = await ac.post("/api/pipeline/validate-llm-key", json={"api_key": ""})
+            assert response.status_code == 200
+            data = response.json()
+            assert data["valid"] is False
+            assert data["error_code"] == ERROR_CODE_EMPTY_KEY
+
+    asyncio.run(_inner())
+
+
+def test_api_endpoint_configure_llm_rejects_invalid():
+    """Verify FastAPI endpoint POST /api/pipeline/configure-llm rejects invalid keys with 400."""
+    async def _inner():
+        transport = ASGITransport(app=dashboard_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            response = await ac.post("/api/pipeline/configure-llm", json={"api_key": ""})
+            assert response.status_code == 400
+            data = response.json()
+            assert data["detail"]["valid"] is False
+            assert data["detail"]["error_code"] == ERROR_CODE_EMPTY_KEY
 
     asyncio.run(_inner())

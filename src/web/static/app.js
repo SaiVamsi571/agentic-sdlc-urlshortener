@@ -625,8 +625,24 @@ window.addEventListener("DOMContentLoaded", () => {
   if (btnCloseLlm) btnCloseLlm.addEventListener("click", hideLLMModal);
   const btnCancelLlm = document.getElementById("btn-cancel-llm-modal");
   if (btnCancelLlm) btnCancelLlm.addEventListener("click", hideLLMModal);
+  const btnValidateKey = document.getElementById("btn-validate-key");
+  if (btnValidateKey) btnValidateKey.addEventListener("click", validateKeyAndFetchModels);
+  const keyInput = document.getElementById("input-openai-key");
+  if (keyInput) {
+    keyInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        validateKeyAndFetchModels();
+      }
+    });
+  }
   const btnSaveLlm = document.getElementById("btn-save-llm-modal");
   if (btnSaveLlm) btnSaveLlm.addEventListener("click", saveLLMConfig);
+
+  const btnCloseQuota = document.getElementById("btn-close-quota-modal");
+  if (btnCloseQuota) btnCloseQuota.addEventListener("click", hideQuotaModal);
+  const btnDismissQuota = document.getElementById("btn-dismiss-quota-modal");
+  if (btnDismissQuota) btnDismissQuota.addEventListener("click", hideQuotaModal);
 });
 
 async function checkLLMStatus() {
@@ -657,12 +673,108 @@ function showLLMModal() {
   const modal = document.getElementById("llm-modal");
   if (modal) modal.classList.add("active");
   const statusEl = document.getElementById("llm-modal-status");
-  if (statusEl) statusEl.textContent = "";
+  if (statusEl) {
+    statusEl.innerHTML = "";
+    statusEl.style.color = "var(--text-muted)";
+  }
+  const modelGroup = document.getElementById("llm-model-group");
+  if (modelGroup) modelGroup.style.display = "none";
+  const saveBtn = document.getElementById("btn-save-llm-modal");
+  if (saveBtn) saveBtn.style.display = "none";
 }
 
 function hideLLMModal() {
   const modal = document.getElementById("llm-modal");
   if (modal) modal.classList.remove("active");
+}
+
+function showQuotaModal() {
+  const modal = document.getElementById("quota-modal");
+  if (modal) modal.classList.add("active");
+}
+
+function hideQuotaModal() {
+  const modal = document.getElementById("quota-modal");
+  if (modal) modal.classList.remove("active");
+}
+
+async function validateKeyAndFetchModels() {
+  const keyInput = document.getElementById("input-openai-key");
+  const statusEl = document.getElementById("llm-modal-status");
+  const modelGroup = document.getElementById("llm-model-group");
+  const modelSelect = document.getElementById("sel-openai-model");
+  const saveBtn = document.getElementById("btn-save-llm-modal");
+  const validateBtn = document.getElementById("btn-validate-key");
+
+  const apiKey = keyInput ? keyInput.value.trim() : "";
+  if (!apiKey) {
+    if (statusEl) {
+      statusEl.style.color = "var(--accent-rose)";
+      statusEl.textContent = "Please enter an OpenAI API key first.";
+    }
+    if (modelGroup) modelGroup.style.display = "none";
+    if (saveBtn) saveBtn.style.display = "none";
+    return;
+  }
+
+  validateBtn.disabled = true;
+  validateBtn.textContent = "Checking...";
+  statusEl.style.color = "var(--text-muted)";
+  statusEl.textContent = "Connecting to OpenAI to validate key and retrieve models...";
+
+  try {
+    const res = await fetch("/api/pipeline/validate-llm-key", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: apiKey })
+    });
+
+    const result = await res.json();
+
+    if (res.status === 429 || result.error_code === "QUOTA_EXHAUSTED") {
+      // Quota exhausted -> Show dedicated popup
+      if (modelGroup) modelGroup.style.display = "none";
+      if (saveBtn) saveBtn.style.display = "none";
+      statusEl.style.color = "var(--accent-rose)";
+      statusEl.textContent = "Quota Exhausted: Account credit limit reached.";
+      hideLLMModal();
+      showQuotaModal();
+      return;
+    }
+
+    if (result.valid === true && Array.isArray(result.models) && result.models.length > 0) {
+      // Valid key -> Show available models
+      modelSelect.innerHTML = "";
+      result.models.forEach(modelName => {
+        const opt = document.createElement("option");
+        opt.value = modelName;
+        opt.textContent = modelName;
+        if (modelName === (result.default_model || "gpt-4o-mini")) {
+          opt.selected = true;
+        }
+        modelSelect.appendChild(opt);
+      });
+
+      if (modelGroup) modelGroup.style.display = "flex";
+      if (saveBtn) saveBtn.style.display = "inline-block";
+      statusEl.style.color = "var(--accent-emerald)";
+      statusEl.textContent = `API Key Validated! Found ${result.models.length} accessible models. Select your model and click 'Save & Activate'.`;
+    } else {
+      // Invalid key -> Strictly show error message, NEVER success
+      if (modelGroup) modelGroup.style.display = "none";
+      if (saveBtn) saveBtn.style.display = "none";
+      statusEl.style.color = "var(--accent-rose)";
+      statusEl.textContent = result.message || "Invalid OpenAI API Key. Please verify your credentials on platform.openai.com.";
+    }
+  } catch (err) {
+    if (modelGroup) modelGroup.style.display = "none";
+    if (saveBtn) saveBtn.style.display = "none";
+    statusEl.style.color = "var(--accent-rose)";
+    statusEl.textContent = `Connection error: ${err.message}`;
+  } finally {
+    validateBtn.disabled = false;
+    validateBtn.textContent = "Validate Key";
+  }
 }
 
 async function saveLLMConfig() {
@@ -675,19 +787,15 @@ async function saveLLMConfig() {
   const model = modelSelect ? modelSelect.value : "gpt-4o-mini";
 
   if (!apiKey) {
-    if (statusEl) {
-      statusEl.style.color = "var(--accent-rose)";
-      statusEl.textContent = "Please enter an OpenAI API key.";
-    }
+    statusEl.style.color = "var(--accent-rose)";
+    statusEl.textContent = "Please enter an OpenAI API key.";
     return;
   }
 
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving...";
-  if (statusEl) {
-    statusEl.style.color = "var(--text-muted)";
-    statusEl.textContent = "Activating OpenAI integration...";
-  }
+  statusEl.style.color = "var(--text-muted)";
+  statusEl.textContent = "Saving and activating model configuration...";
 
   try {
     const res = await fetch("/api/pipeline/configure-llm", {
@@ -696,30 +804,33 @@ async function saveLLMConfig() {
       body: JSON.stringify({ api_key: apiKey, model: model })
     });
 
-    if (res.ok) {
-      const result = await res.json();
-      if (statusEl) {
-        statusEl.style.color = "var(--accent-emerald)";
-        statusEl.textContent = "OpenAI key activated successfully!";
-      }
-      checkLLMStatus();
-      appendLog("INFO", "ORCHESTRATOR", `OpenAI LLM Engine configured with model: ${result.model}`);
-      setTimeout(() => {
-        hideLLMModal();
-        if (keyInput) keyInput.value = "";
-      }, 1000);
-    } else {
-      const err = await res.json();
-      if (statusEl) {
-        statusEl.style.color = "var(--accent-rose)";
-        statusEl.textContent = `Error: ${err.detail || "Failed to configure LLM."}`;
-      }
+    const data = await res.json();
+
+    if (res.status === 429 || (data.detail && data.detail.error_code === "QUOTA_EXHAUSTED")) {
+      hideLLMModal();
+      showQuotaModal();
+      return;
     }
-  } catch (err) {
-    if (statusEl) {
+
+    if (!res.ok) {
+      // Show that it's invalid instead of a success message
+      const errMsg = (data.detail && data.detail.message) ? data.detail.message : (data.detail || "Invalid OpenAI API Key.");
       statusEl.style.color = "var(--accent-rose)";
-      statusEl.textContent = `Network error: ${err.message}`;
+      statusEl.textContent = errMsg;
+      return;
     }
+
+    statusEl.style.color = "var(--accent-emerald)";
+    statusEl.textContent = "OpenAI key activated successfully!";
+    checkLLMStatus();
+    appendLog("INFO", "ORCHESTRATOR", `OpenAI LLM Engine configured with model: ${data.model}`);
+    setTimeout(() => {
+      hideLLMModal();
+      if (keyInput) keyInput.value = "";
+    }, 1000);
+  } catch (err) {
+    statusEl.style.color = "var(--accent-rose)";
+    statusEl.textContent = `Network error: ${err.message}`;
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = "Save & Activate";

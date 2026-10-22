@@ -22,12 +22,19 @@ from src.constants import (
     BLAST_RADIUS_PROPOSALS,
     DASHBOARD_DESCRIPTION,
     DASHBOARD_TITLE,
+    DEFAULT_OPENAI_MODEL,
+    ERROR_CODE_EMPTY_KEY,
+    ERROR_CODE_INVALID_KEY,
+    ERROR_CODE_QUOTA_EXHAUSTED,
+    MSG_API_KEY_EMPTY,
+    MSG_API_KEY_INVALID,
+    MSG_QUOTA_EXHAUSTED,
     SCENARIO_AMBIGUOUS,
     SCENARIO_BROWNFIELD,
     SCENARIO_GREENFIELD,
     SCENARIO_PROMPTS,
 )
-from src.llm import get_llm_client, reload_llm_client
+from src.llm import get_llm_client, reload_llm_client, validate_api_key
 from src.orchestrator.hitl import HITLManager
 from src.orchestrator.metrics import MetricsTracker
 from src.orchestrator.state import PipelineContext, TaskStatus
@@ -57,6 +64,11 @@ class HITLDecisionRequest(BaseModel):
     approved: bool
     reviewer: str = "LeadArchitect"
     comments: str = "Approved via dashboard"
+
+
+class ValidateLLMKeyRequest(BaseModel):
+    """Request body for validating an OpenAI API key."""
+    api_key: str
 
 
 class ConfigureLLMRequest(BaseModel):
@@ -156,12 +168,29 @@ def create_dashboard_app() -> FastAPI:
         llm = get_llm_client()
         return llm.get_status()
 
+    @app.post("/api/pipeline/validate-llm-key", tags=["LLM Engine"])
+    async def validate_key_endpoint(req: ValidateLLMKeyRequest):
+        """Validate an OpenAI API key, check quota, and fetch available models."""
+        result = await validate_api_key(req.api_key)
+        return result
+
     @app.post("/api/pipeline/configure-llm", tags=["LLM Engine"])
     async def configure_llm(req: ConfigureLLMRequest):
-        """Configure OpenAI API key and model dynamically without server restart."""
+        """Validate and configure OpenAI API key and model dynamically without server restart."""
         if not req.api_key or not req.api_key.strip():
-            raise HTTPException(status_code=400, detail="API key cannot be empty.")
-        
+            raise HTTPException(
+                status_code=400,
+                detail={"valid": False, "error_code": ERROR_CODE_EMPTY_KEY, "message": MSG_API_KEY_EMPTY}
+            )
+
+        # Validate the key with OpenAI before persisting
+        validation = await validate_api_key(req.api_key)
+        if not validation["valid"]:
+            status_code = 429 if validation.get("error_code") == ERROR_CODE_QUOTA_EXHAUSTED else 400
+            raise HTTPException(status_code=status_code, detail=validation)
+
+        selected_model = req.model.strip() if req.model else validation.get("default_model", DEFAULT_OPENAI_MODEL)
+
         env_path = BASE_DIR / ".env"
         lines = []
         if env_path.exists():
@@ -169,12 +198,13 @@ def create_dashboard_app() -> FastAPI:
                 if not line.startswith("OPENAI_API_KEY=") and not line.startswith("OPENAI_MODEL="):
                     lines.append(line)
         lines.append(f"OPENAI_API_KEY={req.api_key.strip()}")
-        if req.model:
-            lines.append(f"OPENAI_MODEL={req.model.strip()}")
+        lines.append(f"OPENAI_MODEL={selected_model}")
         env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
         llm = reload_llm_client()
-        return llm.get_status()
+        status_info = llm.get_status()
+        status_info["available_models"] = validation.get("models", [])
+        return status_info
 
     @app.get("/api/pipeline/events", tags=["Pipeline Orchestrator"])
     async def stream_events(request: Request):

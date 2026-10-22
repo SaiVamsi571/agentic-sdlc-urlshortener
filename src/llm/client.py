@@ -15,8 +15,16 @@ from src.constants import (
     DEFAULT_OPENAI_MODEL,
     ENV_OPENAI_API_KEY,
     ENV_OPENAI_MODEL,
+    ERROR_CODE_EMPTY_KEY,
+    ERROR_CODE_INVALID_KEY,
+    ERROR_CODE_NETWORK_ERROR,
+    ERROR_CODE_QUOTA_EXHAUSTED,
+    MSG_API_KEY_EMPTY,
+    MSG_API_KEY_INVALID,
+    MSG_API_KEY_VALIDATED,
     MSG_LLM_FALLBACK,
     MSG_LLM_INITIALIZED,
+    MSG_QUOTA_EXHAUSTED,
 )
 
 logger = logging.getLogger("aethersdlc.llm")
@@ -139,3 +147,147 @@ def reload_llm_client() -> LLMClient:
     load_dotenv(override=True)
     _llm_instance = LLMClient()
     return _llm_instance
+
+
+async def validate_api_key(api_key: str) -> Dict[str, Any]:
+    """
+    Validates an OpenAI API key against the OpenAI API.
+    1. Checks if empty/placeholder.
+    2. Calls models.list() to verify key validity.
+    3. Performs a lightweight completion probe to verify billing quota status.
+    4. Filters and returns available chat models.
+    """
+    clean_key = api_key.strip() if api_key else ""
+    if not clean_key or clean_key.startswith("your_"):
+        return {
+            "valid": False,
+            "error_code": ERROR_CODE_EMPTY_KEY,
+            "message": MSG_API_KEY_EMPTY,
+            "models": [],
+        }
+
+    try:
+        from openai import AsyncOpenAI, AuthenticationError, RateLimitError
+    except ImportError:
+        return {
+            "valid": False,
+            "error_code": ERROR_CODE_NETWORK_ERROR,
+            "message": "OpenAI library is not installed.",
+            "models": [],
+        }
+
+    client = AsyncOpenAI(api_key=clean_key)
+
+    # Step 1: Validate key authenticity and list models
+    try:
+        model_list_resp = await client.models.list()
+    except AuthenticationError:
+        return {
+            "valid": False,
+            "error_code": ERROR_CODE_INVALID_KEY,
+            "message": MSG_API_KEY_INVALID,
+            "models": [],
+        }
+    except RateLimitError as e:
+        err_msg = str(e).lower()
+        if "quota" in err_msg or "insufficient" in err_msg or "billing" in err_msg:
+            return {
+                "valid": False,
+                "error_code": ERROR_CODE_QUOTA_EXHAUSTED,
+                "message": MSG_QUOTA_EXHAUSTED,
+                "models": [],
+            }
+        return {
+            "valid": False,
+            "error_code": ERROR_CODE_NETWORK_ERROR,
+            "message": str(e),
+            "models": [],
+        }
+    except Exception as e:
+        err_str = str(e).lower()
+        if "401" in err_str or "incorrect api key" in err_str or "invalid" in err_str:
+            return {
+                "valid": False,
+                "error_code": ERROR_CODE_INVALID_KEY,
+                "message": MSG_API_KEY_INVALID,
+                "models": [],
+            }
+        return {
+            "valid": False,
+            "error_code": ERROR_CODE_NETWORK_ERROR,
+            "message": f"Connection error: {str(e)}",
+            "models": [],
+        }
+
+    # Filter chat-capable models
+    available_models = []
+    preferred_order = [
+        "gpt-4o-mini",
+        "gpt-4o",
+        "gpt-4-turbo",
+        "gpt-4",
+        "gpt-3.5-turbo",
+        "o1-mini",
+        "o1-preview",
+        "o3-mini",
+    ]
+
+    raw_ids = set()
+    if hasattr(model_list_resp, "data"):
+        raw_ids = {m.id for m in model_list_resp.data if hasattr(m, "id")}
+
+    # Priority list
+    for pref in preferred_order:
+        if pref in raw_ids:
+            available_models.append(pref)
+
+    # Any other gpt or o1/o3 models
+    for m_id in sorted(raw_ids):
+        if (m_id.startswith("gpt-") or m_id.startswith("o1-") or m_id.startswith("o3-")) and m_id not in available_models:
+            if not any(excluded in m_id for excluded in ["embed", "audio", "realtime", "tts", "whisper", "search"]):
+                available_models.append(m_id)
+
+    if not available_models:
+        available_models = [DEFAULT_OPENAI_MODEL]
+
+    # Step 2: Quota probe using the first available model
+    probe_model = available_models[0]
+    try:
+        await client.chat.completions.create(
+            model=probe_model,
+            messages=[{"role": "user", "content": "ping"}],
+            max_tokens=1,
+        )
+    except RateLimitError as e:
+        err_msg = str(e).lower()
+        if "quota" in err_msg or "insufficient" in err_msg or "billing" in err_msg:
+            return {
+                "valid": False,
+                "error_code": ERROR_CODE_QUOTA_EXHAUSTED,
+                "message": MSG_QUOTA_EXHAUSTED,
+                "models": available_models,
+            }
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "insufficient_quota" in err_msg or "exceeded your current quota" in err_msg:
+            return {
+                "valid": False,
+                "error_code": ERROR_CODE_QUOTA_EXHAUSTED,
+                "message": MSG_QUOTA_EXHAUSTED,
+                "models": available_models,
+            }
+        if "401" in err_msg or "invalid_api_key" in err_msg:
+            return {
+                "valid": False,
+                "error_code": ERROR_CODE_INVALID_KEY,
+                "message": MSG_API_KEY_INVALID,
+                "models": [],
+            }
+
+    return {
+        "valid": True,
+        "error_code": None,
+        "message": MSG_API_KEY_VALIDATED,
+        "models": available_models,
+        "default_model": probe_model,
+    }
