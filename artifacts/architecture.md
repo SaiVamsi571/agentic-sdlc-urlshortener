@@ -1,6 +1,6 @@
 # Architectural Decision Records (ADRs)
-**Service**: Schwab AetherSDLC Enterprise URL Shortener
-**Version**: 1.0.0
+**Service**: AetherSDLC Enterprise URL Shortener
+**Version**: 1.1.0
 
 ## ADR-001: 64-Bit MurmurHash3 + Base62 Encoding
 - **Decision**: Hash normalized URL with salt using 64-bit MurmurHash3, encode low 42 bits to 7 Base62 characters.

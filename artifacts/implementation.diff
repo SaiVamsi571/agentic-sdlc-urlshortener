@@ -1,0 +1,23 @@
+diff --git a/src/service/models.py b/src/service/models.py
+--- a/src/service/models.py
++++ b/src/service/models.py
+@@ -10,4 +10,7 @@ class ShortenRequest(BaseModel):
+     custom_alias: Optional[str] = Field(None, max_length=30)
+     ttl_seconds: Optional[int] = Field(None, ge=60)
++    # Disambiguated Marketing Campaign Metadata
++    utm_source: Optional[str] = None
++    utm_campaign: Optional[str] = None
+     tags: Optional[Dict[str, str]] = Field(default_factory=dict)
+diff --git a/src/service/service.py b/src/service/service.py
+--- a/src/service/service.py
++++ b/src/service/service.py
+@@ -82,6 +82,14 @@ class ShortenerService:
+         record = self.repo.get(code)
+         if not record:
+             raise URLNotFoundError(f"Short URL '{code}' does not exist.")
++        if record.is_expired():
++            # Disambiguated: Return explicit HTTP 410 Gone tombstone instead of silent redirect
++            self.cache.invalidate(code)
++            raise URLExpiredError(f"Short URL '{code}' expired on {record.expires_at}")
+         self.cache.put(code, record.original_url)
+         return record.original_url

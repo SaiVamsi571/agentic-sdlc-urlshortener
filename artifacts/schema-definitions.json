@@ -1,0 +1,162 @@
+{
+  "ShortenRequest": {
+    "type": "object",
+    "description": "Incoming payload for creating shortened URLs.",
+    "fields": {
+      "original_url": {
+        "type": "string (HttpUrl)",
+        "required": true,
+        "description": "Target destination URL"
+      },
+      "custom_alias": {
+        "type": "string",
+        "required": false,
+        "pattern": "^[a-zA-Z0-9_-]{3,30}$",
+        "description": "Optional custom short code"
+      },
+      "ttl_seconds": {
+        "type": "integer",
+        "required": false,
+        "minimum": 60,
+        "default": 2592000,
+        "description": "TTL in seconds (default 30 days)"
+      },
+      "tags": {
+        "type": "object",
+        "required": false,
+        "description": "Arbitrary key-value metadata tags"
+      }
+    }
+  },
+  "ShortenResponse": {
+    "type": "object",
+    "description": "Response payload returned upon successful short URL creation.",
+    "fields": {
+      "short_code": {
+        "type": "string",
+        "example": "x7k9Q2a"
+      },
+      "short_url": {
+        "type": "string",
+        "example": "http://127.0.0.1:8000/shortener/x7k9Q2a"
+      },
+      "original_url": {
+        "type": "string"
+      },
+      "created_at": {
+        "type": "datetime (ISO 8601)"
+      },
+      "expires_at": {
+        "type": "datetime (ISO 8601) | null"
+      },
+      "is_custom_alias": {
+        "type": "boolean"
+      },
+      "tags": {
+        "type": "object"
+      }
+    }
+  },
+  "ShortURLRecord": {
+    "type": "object",
+    "description": "Internal database entity stored in SQLite persistence repository.",
+    "fields": {
+      "short_code": {
+        "type": "string (PRIMARY KEY)"
+      },
+      "original_url": {
+        "type": "string"
+      },
+      "custom_alias": {
+        "type": "string | null"
+      },
+      "created_at": {
+        "type": "datetime"
+      },
+      "expires_at": {
+        "type": "datetime | null"
+      },
+      "is_active": {
+        "type": "boolean",
+        "default": true
+      },
+      "click_count": {
+        "type": "integer",
+        "default": 0
+      },
+      "last_accessed": {
+        "type": "datetime | null"
+      }
+    }
+  },
+  "ClickEventRecord": {
+    "type": "object",
+    "description": "GDPR-compliant anonymized click stream telemetry record.",
+    "fields": {
+      "event_id": {
+        "type": "string (UUIDv4)"
+      },
+      "short_code": {
+        "type": "string"
+      },
+      "timestamp": {
+        "type": "datetime"
+      },
+      "ip_hash": {
+        "type": "string (SHA-256 salted hash)",
+        "description": "Non-reversible GDPR masked IP"
+      },
+      "referrer": {
+        "type": "string | null"
+      },
+      "user_agent": {
+        "type": "string | null"
+      },
+      "device_type": {
+        "type": "string",
+        "enum": [
+          "desktop",
+          "mobile",
+          "tablet",
+          "bot"
+        ]
+      },
+      "browser": {
+        "type": "string"
+      },
+      "utm_source": {
+        "type": "string | null"
+      },
+      "utm_medium": {
+        "type": "string | null"
+      },
+      "utm_campaign": {
+        "type": "string | null"
+      }
+    }
+  },
+  "AnalyticsSummaryDTO": {
+    "type": "object",
+    "description": "Aggregated analytics response with breakdowns.",
+    "fields": {
+      "short_code": {
+        "type": "string"
+      },
+      "total_clicks": {
+        "type": "integer"
+      },
+      "unique_visitors": {
+        "type": "integer"
+      },
+      "top_referrers": {
+        "type": "array[ReferrerStat]"
+      },
+      "device_breakdown": {
+        "type": "array[DeviceStat]"
+      },
+      "clicks_by_date": {
+        "type": "array[DateClickCount]"
+      }
+    }
+  }
+}

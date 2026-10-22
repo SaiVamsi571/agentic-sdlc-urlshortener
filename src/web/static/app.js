@@ -172,6 +172,11 @@ function handlePipelineEvent(event) {
       const report = event.output.blast_radius_report || event.output;
       updateBlastRadiusUI(report);
     }
+
+    // If node completed was Coder Agent, log engineering output summary
+    if (event.output && event.output.type_annotation_coverage_pct !== undefined) {
+      appendLog("CODE", event.node_id, `Engineering Output Generated: ${event.output.total_modules} modules (${event.output.total_lines_of_code} LOC), ${event.output.type_annotation_coverage_pct}% typed, ${event.output.total_schemas} schemas. Saved artifacts/implementation.diff.`);
+    }
   }
   else if (type === "HITL_REQUESTED") {
     const node = currentNodes.find(n => n.id === event.node_id);
