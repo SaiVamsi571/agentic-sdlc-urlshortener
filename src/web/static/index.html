@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AetherSDLC - Agentic Software Engineering Orchestration System</title>
+  <meta name="description"
+    content="Stateful DAG Orchestration Engine for URL Shortener with Controlled Autonomy, Dynamic Re-planning, and Audit-Grade Lineage.">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <img src="/static/assets/logo.svg" alt="AetherSDLC Nexus" class="brand-logo">
+      <h1>AetherSDLC Orchestration Engine</h1>
+    </div>
+    <div class="scenario-controls">
+      <label
+        style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); cursor: pointer;">
+        <input type="checkbox" id="chk-auto-approve" checked>
+        Auto-Approve HITL Gates
+      </label>
+      <button class="btn btn-primary" id="btn-run-greenfield">
+        <span>Run Greenfield</span>
+      </button>
+      <button class="btn" id="btn-run-brownfield">
+        <span>Run Brownfield</span>
+      </button>
+      <button class="btn" id="btn-run-ambiguous">
+        <span>Run Ambiguous</span>
+      </button>
+      <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 4px;"></div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="dashboard-grid">
+    <!-- Telemetry Cards -->
+    <section class="telemetry-row">
+      <div class="telemetry-card">
+        <span class="card-title">Success Rate</span>
+        <span class="card-value" id="val-success-rate">100.0%</span>
+        <span class="card-subtitle">Zero unhandled exceptions</span>
+      </div>
+      <div class="telemetry-card">
+        <span class="card-title">MTTR Recovery</span>
+        <span class="card-value" id="val-mttr">0.00s</span>
+        <span class="card-subtitle">Autonomous self-healing</span>
+      </div>
+      <div class="telemetry-card">
+        <span class="card-title">Avg Latency</span>
+        <span class="card-value" id="val-latency">3.5s</span>
+        <span class="card-subtitle">End-to-End SDLC cycle</span>
+      </div>
+      <div class="telemetry-card">
+        <span class="card-title">Guardrail Shield</span>
+        <span class="card-value" id="val-violations" style="color: var(--accent-rose);">0</span>
+        <span class="card-subtitle">0 Violations blocked</span>
+      </div>
+      <div class="telemetry-card">
+        <span class="card-title">Active SDLC Phase</span>
+        <span class="card-value" id="val-phase" style="font-size: 1.4rem; color: var(--accent-cyan);">IDLE</span>
+        <span class="card-subtitle" id="val-pipeline-id">Ready to launch</span>
+      </div>
+    </section>
+
+    <!-- Center Column: DAG Visualizer and Decision Lineage -->
+    <section class="main-column">
+      <!-- DAG Visualizer Panel -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2>
+            <img src="/static/assets/icon-dag.svg" alt="DAG" class="panel-icon">
+            Explicit Dependency Graph (DAG) & Synchronization Layers
+          </h2>
+          <span style="font-size: 0.8rem; color: var(--text-muted);" id="dag-status-pill">Ready</span>
+        </div>
+        <div class="dag-container">
+          <svg class="dag-svg-canvas" id="dag-canvas" viewBox="0 0 1100 380" preserveAspectRatio="xMidYMid meet">
+            <!-- Rendered dynamically by app.js -->
+          </svg>
+        </div>
+      </div>
+
+      <!-- Live Lineage & Event Stream Panel -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2>
+            <img src="/static/assets/icon-stream.svg" alt="Lineage" class="panel-icon">
+            Audit-Grade Lineage & Real-Time Event Stream
+          </h2>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="btn btn-sm" id="btn-open-report"
+              style="color: var(--accent-cyan); border-color: rgba(0, 210, 255, 0.4); display: flex; align-items: center; gap: 0.35rem;">
+              <img src="/static/assets/icon-report.svg" width="14" height="14" alt="Report" style="filter: drop-shadow(0 0 4px rgba(0,210,255,0.4));">
+              <span>Engineering Report</span>
+            </button>
+            <button class="btn btn-sm" id="btn-clear-logs">Clear View</button>
+          </div>
+        </div>
+        <div class="log-stream" id="log-stream">
+          <div class="log-entry level-INFO">
+            <div class="log-header">
+              <span>SYSTEM</span>
+              <span>Ready</span>
+            </div>
+            <div class="log-msg">AetherSDLC Orchestration Engine initialized. Ready to trigger greenfield, brownfield,
+              or ambiguous scenario.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Live URL Shortener Sandbox & Blast Radius -->
+    <aside class="sidebar-column">
+      <!-- Live URL Shortener Interactive Playground -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2>
+            <img src="/static/assets/icon-link.svg" alt="Shortener" class="panel-icon">
+            URL Shortener Live Playground
+          </h2>
+        </div>
+        <form class="playground-form" id="shorten-form">
+          <div class="form-group">
+            <label for="input-url">Destination URL</label>
+            <input type="url" id="input-url" class="form-input" placeholder="https://www.example.com/investing" required
+              value="https://www.example.com/investing">
+          </div>
+          <div class="form-group">
+            <label for="input-alias">Custom Alias (Optional)</label>
+            <input type="text" id="input-alias" class="form-input" placeholder="my-custom-link">
+          </div>
+          <div class="form-group">
+            <label for="input-ttl">TTL (Seconds)</label>
+            <input type="number" id="input-ttl" class="form-input" placeholder="2592000 (30 days)" value="2592000">
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;">
+            <span>Shorten Link</span>
+          </button>
+        </form>
+
+        <div class="result-card" id="shorten-result">
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">Generated Short URL:</div>
+          <a id="short-link" href="#" target="_blank"
+            style="color: var(--accent-cyan); font-weight: 600; text-decoration: none; word-break: break-all;"></a>
+          <div style="margin-top: 0.8rem; display: flex; gap: 0.5rem;">
+            <button class="btn btn-sm" id="btn-test-click">Simulate Click Hop</button>
+            <button class="btn btn-sm" id="btn-fetch-analytics">View Analytics</button>
+          </div>
+        </div>
+
+        <!-- Analytics Output Card -->
+        <div id="analytics-card"
+          style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); display: none;">
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--accent-emerald);">Live
+            Click Analytics</div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.2rem;">
+            <span>Total Clicks:</span> <strong id="stat-total-clicks">0</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.2rem;">
+            <span>Unique Visitors:</span> <strong id="stat-uniques">0</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <span>Top Device:</span> <strong id="stat-device">-</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blast Radius & Codebase Intelligence -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2>
+            <img src="/static/assets/icon-radar.svg" alt="Blast Radius" class="panel-icon">
+            AST Blast Radius Reasoning
+          </h2>
+        </div>
+        <div id="blast-radius-box" style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">
+          <p>Triggers on brownfield changes. Automatically parses the Python AST to calculate caller-callee linkages and
+            downstream architectural risk.</p>
+          <div style="margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.35rem;">
+            <label for="sel-blast-proposal" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 500;">Simulate Change Proposal:</label>
+            <select id="sel-blast-proposal" class="form-select">
+              <option value="brownfield" selected>Brownfield Analytics & Rate Limiter (Full Scope)</option>
+              <option value="schema_migration">Schema Migration (Models & SQLite)</option>
+              <option value="router_only">API Endpoint Modification (URL Router)</option>
+              <option value="cache">Cache Eviction Layer (LRU & Service)</option>
+              <option value="validator">URL Scheme Patch (Validator Only)</option>
+            </select>
+          </div>
+          <div style="margin-top: 0.8rem; padding: 0.6rem; background: rgba(0,0,0,0.4); border-radius: 6px;"
+            id="blast-details">
+            <div>Risk Score: <strong style="color: var(--accent-emerald);">LOW (0.0)</strong></div>
+            <div>Impacted Modules: <strong>0</strong></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Interactive HITL Approval Modal -->
+  <div class="modal-overlay" id="hitl-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="hitl-title">Governance Checkpoint</h3>
+        <span class="risk-badge risk-HIGH" id="hitl-risk">HIGH RISK</span>
+      </div>
+      <p id="hitl-description" style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;"></p>
+
+      <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">Inspection Details & Proposed Changes:
+      </div>
+      <div class="modal-diff" id="hitl-diff">
+        // Inspected diffs or schema additions will appear here
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" style="border-color: var(--accent-rose); color: var(--accent-rose);"
+          id="btn-hitl-reject">Reject (Trigger Rollback)</button>
+        <button class="btn btn-primary" id="btn-hitl-approve">Approve & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent Engineering Run Report Modal -->
+  <div class="modal-overlay" id="report-modal">
+    <div class="modal-content"
+      style="max-width: 860px; width: 90%; max-height: 85vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 0.5rem;">
+          <img src="/static/assets/icon-report.svg" width="18" height="18" alt="Report">
+          <span>Engineering Run Report</span>
+        </h3>
+        <button class="btn btn-sm" id="btn-close-report" style="padding: 0.2rem 0.6rem; cursor: pointer;">✕</button>
+      </div>
+      <div id="report-content"
+        style="overflow-y: auto; flex: 1; padding: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary); white-space: pre-wrap; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 1rem;">
+        No pipeline run report available yet. Run a scenario to generate artifacts.
+      </div>
+      <div class="modal-actions"
+        style="border-top: 1px solid var(--border-subtle); padding-top: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Saved to
+          <code>artifacts/engineering-summary.md</code></span>
+        <button class="btn btn-primary" id="btn-dismiss-report">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>

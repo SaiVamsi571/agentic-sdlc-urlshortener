@@ -1,0 +1,28 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Schwab Enterprise URL Shortener",
+    "version": "1.1.0",
+    "description": "High-performance URL shortener API with analytics and rate limiting."
+  },
+  "paths": {
+    "/shortener/api/v1/shorten": {
+      "post": {
+        "summary": "Create short URL",
+        "status": 201
+      }
+    },
+    "/shortener/{short_code}": {
+      "get": {
+        "summary": "Redirect to destination",
+        "status": 307
+      }
+    },
+    "/shortener/api/v1/analytics/{short_code}": {
+      "get": {
+        "summary": "Get click statistics",
+        "status": 200
+      }
+    }
+  }
+}
