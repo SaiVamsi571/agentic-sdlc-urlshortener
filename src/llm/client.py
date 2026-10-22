@@ -44,7 +44,12 @@ class LLMClient:
         self._client = None
 
         # Check if a valid, non-placeholder key is provided
-        if self.api_key and not self.api_key.strip().startswith("your_"):
+        # OpenAI API keys start with "sk-" and have non-trivial length
+        if (
+            self.api_key
+            and self.api_key.strip().startswith("sk-")
+            and len(self.api_key.strip()) >= 20
+        ):
             try:
                 from openai import AsyncOpenAI
                 self._client = AsyncOpenAI(api_key=self.api_key.strip())
@@ -53,6 +58,7 @@ class LLMClient:
                 logger.warning(f"{MSG_LLM_FALLBACK}: {str(e)}")
                 self._client = None
         else:
+            self._client = None
             logger.info(MSG_LLM_FALLBACK)
 
     @property
@@ -157,6 +163,24 @@ def reset_to_deterministic() -> Dict[str, Any]:
     if _llm_instance is None:
         _llm_instance = LLMClient()
     _llm_instance._client = None
+    _llm_instance.api_key = None
+    if "OPENAI_API_KEY" in os.environ:
+        del os.environ["OPENAI_API_KEY"]
+
+    # Remove active key from .env file so it does not re-enable on server restart
+    try:
+        from pathlib import Path
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        env_path = repo_root / ".env"
+        if env_path.exists():
+            lines = [
+                line for line in env_path.read_text(encoding="utf-8").splitlines()
+                if not line.startswith("OPENAI_API_KEY=")
+            ]
+            env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+
     return _llm_instance.get_status()
 
 
@@ -174,6 +198,14 @@ async def validate_api_key(api_key: str) -> Dict[str, Any]:
             "valid": False,
             "error_code": ERROR_CODE_EMPTY_KEY,
             "message": MSG_API_KEY_EMPTY,
+            "models": [],
+        }
+
+    if not clean_key.startswith("sk-"):
+        return {
+            "valid": False,
+            "error_code": ERROR_CODE_INVALID_KEY,
+            "message": MSG_API_KEY_INVALID,
             "models": [],
         }
 

@@ -41,6 +41,13 @@ def test_llm_client_placeholder_key_ignored(monkeypatch):
     assert client.is_enabled is False
 
 
+def test_llm_client_malformed_key_ignored(monkeypatch):
+    """Verify malformed keys without sk- prefix are treated as unconfigured."""
+    monkeypatch.setenv("OPENAI_API_KEY", "kjhghjkjhghj")
+    client = LLMClient()
+    assert client.is_enabled is False
+
+
 def test_llm_client_graceful_fallback_when_disabled(monkeypatch):
     """Verify text and JSON generation gracefully return None when disabled."""
     async def _inner():
