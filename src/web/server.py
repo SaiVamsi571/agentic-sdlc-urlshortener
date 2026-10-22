@@ -34,7 +34,7 @@ from src.constants import (
     SCENARIO_GREENFIELD,
     SCENARIO_PROMPTS,
 )
-from src.llm import get_llm_client, reload_llm_client, validate_api_key
+from src.llm import get_llm_client, reload_llm_client, reset_to_deterministic, validate_api_key
 from src.orchestrator.hitl import HITLManager
 from src.orchestrator.metrics import MetricsTracker
 from src.orchestrator.state import PipelineContext, TaskStatus
@@ -170,14 +170,23 @@ def create_dashboard_app() -> FastAPI:
 
     @app.post("/api/pipeline/validate-llm-key", tags=["LLM Engine"])
     async def validate_key_endpoint(req: ValidateLLMKeyRequest):
-        """Validate an OpenAI API key, check quota, and fetch available models."""
+        """Validate an OpenAI API key, check quota, and fetch available models.
+        Reverts active engine to deterministic if key is invalid or quota is exhausted."""
         result = await validate_api_key(req.api_key)
+        if not result["valid"]:
+            reset_to_deterministic()
         return result
+
+    @app.post("/api/pipeline/reset-llm", tags=["LLM Engine"])
+    async def reset_llm_endpoint():
+        """Reset the AI engine back to deterministic mode and return updated status."""
+        return reset_to_deterministic()
 
     @app.post("/api/pipeline/configure-llm", tags=["LLM Engine"])
     async def configure_llm(req: ConfigureLLMRequest):
         """Validate and configure OpenAI API key and model dynamically without server restart."""
         if not req.api_key or not req.api_key.strip():
+            reset_to_deterministic()
             raise HTTPException(
                 status_code=400,
                 detail={"valid": False, "error_code": ERROR_CODE_EMPTY_KEY, "message": MSG_API_KEY_EMPTY}
@@ -186,6 +195,7 @@ def create_dashboard_app() -> FastAPI:
         # Validate the key with OpenAI before persisting
         validation = await validate_api_key(req.api_key)
         if not validation["valid"]:
+            reset_to_deterministic()
             status_code = 429 if validation.get("error_code") == ERROR_CODE_QUOTA_EXHAUSTED else 400
             raise HTTPException(status_code=status_code, detail=validation)
 

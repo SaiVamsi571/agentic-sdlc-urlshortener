@@ -17,7 +17,7 @@ from src.constants import (
     MSG_API_KEY_INVALID,
     MSG_QUOTA_EXHAUSTED,
 )
-from src.llm.client import LLMClient, validate_api_key
+from src.llm.client import LLMClient, reset_to_deterministic, validate_api_key
 from src.web.server import dashboard_app
 
 
@@ -252,5 +252,27 @@ def test_api_endpoint_configure_llm_rejects_invalid():
             data = response.json()
             assert data["detail"]["valid"] is False
             assert data["detail"]["error_code"] == ERROR_CODE_EMPTY_KEY
+
+    asyncio.run(_inner())
+
+
+def test_reset_to_deterministic():
+    """Verify reset_to_deterministic deactivates any client and sets engine to deterministic."""
+    status = reset_to_deterministic()
+    assert status["enabled"] is False
+    assert status["engine"] == AI_ENGINE_DETERMINISTIC
+    assert status["provider"] == "internal"
+
+
+def test_api_endpoint_reset_llm():
+    """Verify POST /api/pipeline/reset-llm resets engine and returns deterministic status."""
+    async def _inner():
+        transport = ASGITransport(app=dashboard_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            response = await ac.post("/api/pipeline/reset-llm")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["enabled"] is False
+            assert data["engine"] == AI_ENGINE_DETERMINISTIC
 
     asyncio.run(_inner())

@@ -659,13 +659,26 @@ async function checkLLMStatus() {
         label.textContent = `AI Engine: OpenAI (${data.model})`;
         badge.title = `OpenAI LLM Engine active with model ${data.model}. Click to modify.`;
       } else {
-        badge.classList.remove("active-openai");
-        label.textContent = "AI Engine: Simulation (Click to add key)";
-        badge.title = "Deterministic simulation active. Click to configure OpenAI API key.";
+        revertBadgeToDeterministic();
       }
+    } else {
+      revertBadgeToDeterministic();
     }
   } catch (err) {
     console.error("Failed to check LLM status", err);
+    revertBadgeToDeterministic();
+  }
+}
+
+function revertBadgeToDeterministic() {
+  const badge = document.getElementById("ai-engine-badge");
+  const label = document.getElementById("ai-engine-label");
+  if (badge) {
+    badge.classList.remove("active-openai");
+    badge.title = "Deterministic simulation active. Click to configure OpenAI API key.";
+  }
+  if (label) {
+    label.textContent = "AI Engine: Simulation (Deterministic)";
   }
 }
 
@@ -689,11 +702,13 @@ function hideLLMModal() {
 }
 
 function showQuotaModal() {
+  revertBadgeToDeterministic();
   const modal = document.getElementById("quota-modal");
   if (modal) modal.classList.add("active");
 }
 
 function hideQuotaModal() {
+  revertBadgeToDeterministic();
   const modal = document.getElementById("quota-modal");
   if (modal) modal.classList.remove("active");
 }
@@ -708,6 +723,7 @@ async function validateKeyAndFetchModels() {
 
   const apiKey = keyInput ? keyInput.value.trim() : "";
   if (!apiKey) {
+    revertBadgeToDeterministic();
     if (statusEl) {
       statusEl.style.color = "var(--accent-rose)";
       statusEl.textContent = "Please enter an OpenAI API key first.";
@@ -732,11 +748,12 @@ async function validateKeyAndFetchModels() {
     const result = await res.json();
 
     if (res.status === 429 || result.error_code === "QUOTA_EXHAUSTED") {
-      // Quota exhausted -> Show dedicated popup
+      // Quota exhausted -> Revert badge to Deterministic immediately & Show dedicated popup
+      revertBadgeToDeterministic();
       if (modelGroup) modelGroup.style.display = "none";
       if (saveBtn) saveBtn.style.display = "none";
       statusEl.style.color = "var(--accent-rose)";
-      statusEl.textContent = "Quota Exhausted: Account credit limit reached.";
+      statusEl.textContent = "Quota Exhausted: Account credit limit reached. Reverted to Deterministic Engine.";
       hideLLMModal();
       showQuotaModal();
       return;
@@ -760,13 +777,15 @@ async function validateKeyAndFetchModels() {
       statusEl.style.color = "var(--accent-emerald)";
       statusEl.textContent = `API Key Validated! Found ${result.models.length} accessible models. Select your model and click 'Save & Activate'.`;
     } else {
-      // Invalid key -> Strictly show error message, NEVER success
+      // Invalid key -> Revert badge to Deterministic immediately & strictly show error message, NEVER success
+      revertBadgeToDeterministic();
       if (modelGroup) modelGroup.style.display = "none";
       if (saveBtn) saveBtn.style.display = "none";
       statusEl.style.color = "var(--accent-rose)";
       statusEl.textContent = result.message || "Invalid OpenAI API Key. Please verify your credentials on platform.openai.com.";
     }
   } catch (err) {
+    revertBadgeToDeterministic();
     if (modelGroup) modelGroup.style.display = "none";
     if (saveBtn) saveBtn.style.display = "none";
     statusEl.style.color = "var(--accent-rose)";
@@ -807,12 +826,14 @@ async function saveLLMConfig() {
     const data = await res.json();
 
     if (res.status === 429 || (data.detail && data.detail.error_code === "QUOTA_EXHAUSTED")) {
+      revertBadgeToDeterministic();
       hideLLMModal();
       showQuotaModal();
       return;
     }
 
     if (!res.ok) {
+      revertBadgeToDeterministic();
       // Show that it's invalid instead of a success message
       const errMsg = (data.detail && data.detail.message) ? data.detail.message : (data.detail || "Invalid OpenAI API Key.");
       statusEl.style.color = "var(--accent-rose)";
@@ -829,6 +850,7 @@ async function saveLLMConfig() {
       if (keyInput) keyInput.value = "";
     }, 1000);
   } catch (err) {
+    revertBadgeToDeterministic();
     statusEl.style.color = "var(--accent-rose)";
     statusEl.textContent = `Network error: ${err.message}`;
   } finally {

@@ -149,6 +149,15 @@ def reload_llm_client() -> LLMClient:
     return _llm_instance
 
 
+def reset_to_deterministic() -> Dict[str, Any]:
+    """Force reset the LLM client to disabled state (Deterministic Simulation Engine)."""
+    global _llm_instance
+    if _llm_instance is None:
+        _llm_instance = LLMClient()
+    _llm_instance._client = None
+    return _llm_instance.get_status()
+
+
 async def validate_api_key(api_key: str) -> Dict[str, Any]:
     """
     Validates an OpenAI API key against the OpenAI API.
