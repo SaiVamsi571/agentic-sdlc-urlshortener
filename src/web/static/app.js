@@ -865,17 +865,59 @@ async function saveLLMConfig() {
   }
 }
 
-async function showReportModal() {
+async function showReportModal(loadCached = false) {
   const modal = document.getElementById("report-modal");
   const content = document.getElementById("report-content");
   modal.classList.add("active");
-  content.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-style: italic;">Loading engineering run report from artifacts/engineering-summary.md...</div>';
+  content.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-style: italic;">Loading engineering run report...</div>';
   try {
-    const res = await fetch("/api/pipeline/report");
+    const url = loadCached ? "/api/pipeline/report?include_cached=true" : "/api/pipeline/report";
+    const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
       if (data.status === "AVAILABLE" && data.report_markdown) {
-        content.innerHTML = renderMarkdownToHtml(data.report_markdown);
+        let prefixHtml = "";
+        if (!data.session_active) {
+          prefixHtml = `
+            <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: var(--accent-cyan); display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+              <span>Showing archived reference report from disk (artifacts/engineering-summary.md). Current session is IDLE.</span>
+              <button class="btn btn-sm btn-primary" onclick="hideReportModal(); document.getElementById('btn-run-greenfield').click();">Run Greenfield</button>
+            </div>
+          `;
+        }
+        content.innerHTML = prefixHtml + renderMarkdownToHtml(data.report_markdown);
+      } else if (data.status === "IDLE" || !data.session_active) {
+        content.innerHTML = `
+          <div style="padding: 3rem 1.5rem; text-align: center;">
+            <div style="font-size: 1.15rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+              No Pipeline Scenario Executed in Current Session
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); max-width: 520px; margin: 0 auto 1.5rem auto; line-height: 1.5;">
+              The AetherSDLC orchestrator is currently IDLE. Trigger a scenario to execute the DAG pipeline and generate a live, certified engineering report.
+            </div>
+            <div style="display: flex; gap: 0.75rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="hideReportModal(); document.getElementById('btn-run-greenfield').click();">
+                Run Greenfield Now
+              </button>
+              ${data.cached_available ? `
+                <button class="btn" id="btn-view-cached-report" onclick="showReportModal(true);">
+                  View Reference Report (from disk)
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      } else if (data.status === "RUNNING") {
+        content.innerHTML = `
+          <div style="padding: 3rem 1.5rem; text-align: center;">
+            <div style="font-size: 1.1rem; font-weight: 600; color: var(--accent-cyan); margin-bottom: 0.5rem;">
+              Pipeline Currently Executing (${data.scenario || 'Active'})
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.5;">
+              The engineering run report will be automatically compiled once the pipeline passes all quality gates and reaches Release Readiness.
+            </div>
+          </div>
+        `;
       } else {
         content.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">No engineering report has been generated yet. Run a pipeline scenario (e.g. Run Greenfield) to produce artifacts.</div>';
       }

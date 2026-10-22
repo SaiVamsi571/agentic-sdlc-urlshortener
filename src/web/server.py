@@ -154,13 +154,33 @@ def create_dashboard_app() -> FastAPI:
         return report
 
     @app.get("/api/pipeline/report", tags=["Pipeline Orchestrator"])
-    async def get_engineering_report():
-        """Retrieve the persisted engineering run report markdown."""
+    async def get_engineering_report(include_cached: bool = False):
+        """Retrieve the engineering run report for the active session, or cached archive if requested."""
+        global active_context
         report_path = BASE_DIR / "artifacts" / "engineering-summary.md"
-        if not report_path.exists():
-            return {"status": "NOT_GENERATED", "message": "No pipeline run has completed yet."}
+        cached_exists = report_path.exists()
+
+        if active_context is None:
+            return {
+                "status": "IDLE" if not (cached_exists and include_cached) else "AVAILABLE",
+                "session_active": False,
+                "message": "No pipeline scenario has been executed in the current session.",
+                "cached_available": cached_exists,
+                "report_markdown": report_path.read_text(encoding="utf-8") if (cached_exists and include_cached) else None,
+            }
+
+        if not cached_exists:
+            return {
+                "status": "RUNNING" if active_context.status.value in ["running", "pending", "waiting_approval"] else "NOT_GENERATED",
+                "session_active": True,
+                "scenario": active_context.scenario_name,
+                "message": "Engineering report is compiling. It will be finalized upon reaching Release Readiness.",
+            }
+
         return {
             "status": "AVAILABLE",
+            "session_active": True,
+            "scenario": active_context.scenario_name,
             "report_markdown": report_path.read_text(encoding="utf-8"),
         }
 
