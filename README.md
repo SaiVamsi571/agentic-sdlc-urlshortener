@@ -110,6 +110,10 @@ Users can configure the OpenAI API key through either the **Interactive Web Dash
 5. Select your preferred model and click **"Activate Live AI Engine"**. The status badge in the header updates immediately to `AI Engine: Live (model-name)`.
 6. To switch back to deterministic simulation at any time, open the modal and click **"Reset to Deterministic"**.
 
+| Step 1: Add OpenAI Key | Step 2: Strict Error Validation | Step 3: Quota Alert Guardrail |
+| :---: | :---: | :---: |
+| ![Add OpenAI Key](Screenshots/Add%20API%20Key.png) | ![Invalid API Key Error](Screenshots/Invalid%20API%20Key.png) | ![Quota Exhausted Popup](Screenshots/Open%20AI%20Quota%20exhausted.png) |
+
 ### Method B: Configuring via the `.env` File
 1. Create or edit a `.env` file in the project root:
    ```bash
@@ -137,6 +141,8 @@ AetherSDLC enforces strict governance checkpoints where human intervention is re
   - The audit engine records an immutable event with reviewer `"AutonomousGateController"` and verdict `"APPROVED"`.
   - The node transitions to `TaskStatus.COMPLETED` without pausing, allowing downstream tasks (such as `ReleaseManagerAgent`) to proceed immediately.
 
+![Autonomous Gate Controller Pipeline Execution](Screenshots/Brownfield%20Auto%20HITL.png)
+
 ### 2. Manual Approve (`approved: true`)
 - **When used**: Interactive operator review of high-impact changes (database schema additions, public API contract revisions, production release sign-offs).
 - **System Behavior**:
@@ -147,6 +153,15 @@ AetherSDLC enforces strict governance checkpoints where human intervention is re
   - The backend records the decision in `context.approvals` and appends an immutable audit record to `logs/audit_trail.jsonl` with timestamp, reviewer ID, and approval comments.
   - The node transitions to `TaskStatus.COMPLETED`.
   - The orchestrator unblocks the topological scheduler and dispatches the downstream nodes (e.g. `ReleaseManagerAgent`), compiling `artifacts/engineering-summary.md` and `release_manifest.json`.
+
+![HITL Governance Checkpoint - Change Control Review](Screenshots/Brownfield%20HITL.png)
+
+#### Code Changes & Implementation Diff Inspection
+During the HITL review gate, the operator inspects the proposed modifications across core, service, and database layers before granting sign-off:
+
+| Core Algorithm Implementation Diff | Domain Service Layer Diff | Storage & Schema Migration Diff |
+| :---: | :---: | :---: |
+| ![Implementation Diff 1](Screenshots/Greenfield%20Code%20Changes%20Implementation%20Diff%201.png) | ![Implementation Diff 2](Screenshots/Greenfield%20Code%20Changes%20Implementation%20Diff%202.png) | ![Implementation Diff 3](Screenshots/Greenfield%20Code%20Changes%20Implementation%20Diff%203.png) |
 
 ### 3. Manual Reject (`approved: false`)
 - **When used**: Operator identifies unacceptable blast radius risk, security concerns, or architectural regressions.
@@ -170,10 +185,20 @@ Once an HITL decision has been registered, follow these operational procedures:
 1. **Inspect the Certified Engineering Summary**:
    - In the Web Dashboard, click **"View Report"** on the completed release stage, or open [artifacts/engineering-summary.md](file:///c:/Users/nsaiv/.gemini/antigravity-ide/scratch/agentic-sdlc-urlshortener/artifacts/engineering-summary.md).
    - Review the release manifest (`REL-1.0.0`), test execution metrics (100% pass rate), SAST security scan results (OWASP, SSRF, GDPR), and architectural decisions.
+
+| Executive Engineering Summary Snapshot | Requirements Traceability & Verification Matrix |
+| :---: | :---: |
+| ![Engineering Summary Executive Snapshot](Screenshots/Engineering%20Report%201.png) | ![Test Results and Requirements Matrix](Screenshots/Engineering%20Report%202.png) |
+
 2. **Live Verification in the Interactive Sandbox**:
    - Navigate to the **Target Service Sandbox** section at the bottom of the Web Dashboard (or visit [http://127.0.0.1:8000/shortener](http://127.0.0.1:8000/shortener)).
    - Test generating short URLs, resolving 307 temporary redirects, verifying sliding-window rate limit headers (`Retry-After`), and viewing GDPR-compliant click analytics.
    - Alternatively, test via OpenAPI Swagger documentation at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
+| Target URL Shortener Sandbox | Live Salted Click Analytics & Hop Simulation |
+| :---: | :---: |
+| ![Target URL Shortener Sandbox](Screenshots/URL%20Shortner.png) | ![Live Salted Click Analytics](Screenshots/Analytics.png) |
+
 3. **Promote the Implementation Diff**:
    - The verified code changes are captured in [artifacts/implementation.diff](file:///c:/Users/nsaiv/.gemini/antigravity-ide/scratch/agentic-sdlc-urlshortener/artifacts/implementation.diff).
    - In a production engineering pipeline, apply and commit this diff:
@@ -217,9 +242,13 @@ Once an HITL decision has been registered, follow these operational procedures:
   3. `TechnicalProgramDecompositionAgent`: Generates WBS across 5 parallel execution stages.
   4. `SeniorFullStackEngineerAgent`: Generates and verifies 11 modules (1,100+ LOC).
   5. `SecurityComplianceOfficerAgent`: Verifies OWASP, SSRF, SQL injection, and GDPR rules.
-  6. `QualityAssuranceTestAgent`: Runs 28 automated tests (Unit, API, Concurrency).
+  6. `QualityAssuranceTestAgent`: Runs 46 automated tests across Unit, API, Concurrency, and LLM suites.
   7. `HITL Approval Gate`: Enforces human review of test outcomes.
   8. `ReleaseManagerAgent`: Generates certified release manifest `REL-1.0.0`.
+
+| Autonomous Greenfield Execution | Human-in-the-Loop Release Gate |
+| :---: | :---: |
+| ![Greenfield Autonomous Execution](Screenshots/Greenfield%20Auto%20HITL.png) | ![Greenfield Governance Gate](Screenshots/Greenfield%20HITL.png) |
 
 ### Scenario 2: Brownfield (Analytics & Rate Limiting Refactor)
 - **Input Requirement**: Add Sliding-Window Rate Limiting (60 write/min, 1200 read/min) and granular Device/Referrer click analytics to the existing service without breaking existing API contracts.
@@ -231,12 +260,18 @@ Once an HITL decision has been registered, follow these operational procedures:
   5. `QualityAssuranceTestAgent`: Runs full regression and concurrency stress tests.
   6. `ReleaseManagerAgent`: Approves version `1.1.0` release.
 
+| AST Blast Radius: Full Scope Evaluation | AST Blast Radius: Proposal Comparative Analysis |
+| :---: | :---: |
+| ![AST Blast Radius Full Scope](Screenshots/Blast%20Radius%201.png) | ![AST Blast Radius Proposal Comparison](Screenshots/Blast%20Radius%202.png) |
+
 ### Scenario 3: Ambiguous Requirements & Disambiguation
 - **Input Requirement**: *"We want to make the URL shortener faster, add some marketing campaign things, and make sure expired links don't break horribly."*
 - **Agentic Flow**:
   1. `RequirementsAnalystAgent`: Analyzes vague intent, flags **Ambiguity Score = 0.80**, and identifies 4 missing architectural constraints (Cache strategy, UTM marketing schema, Expired 410 vs fallback behavior, Rate limits).
   2. `Stakeholder Clarification Gate`: Synthesizes ambiguity clarification proposal; stakeholder locks canonical decisions.
   3. Downstream Execution: Dynamically re-plans DAG to execute architecture, implementation, guardrail audits, and verification.
+
+![Ambiguous Disambiguation DAG Execution](Screenshots/Ambiguous%20Auto%20HITL.png)
 
 ---
 
