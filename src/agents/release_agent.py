@@ -11,13 +11,37 @@ from typing import Any, Dict, List
 from src.agents.base import BaseAgent
 from src.config import BASE_DIR
 from src.constants import (
-    GREENFIELD_VERSION,
+    AGENT_NAME_CODER,
+    AGENT_NAME_RELEASE,
+    ARTIFACT_API_OPENAPI_JSON,
+    ARTIFACT_ARCHITECTURE_MD,
+    ARTIFACT_AUDIT_LOG_JSONL,
+    ARTIFACT_ENGINEERING_DESIGN_MD,
+    ARTIFACT_ENGINEERING_SUMMARY_MD,
+    ARTIFACT_IMPLEMENTATION_DIFF,
+    ARTIFACT_REQUIREMENTS_MD,
+    ARTIFACT_RISK_ASSESSMENT_MD,
+    ARTIFACT_SCHEMA_DEFINITIONS_JSON,
+    ARTIFACT_TEST_RESULTS_JSON,
     BROWNFIELD_VERSION,
+    GREENFIELD_VERSION,
     OPENAPI_VERSION,
     ROLLBACK_CHECKPOINT_ID,
     ROLLBACK_RECOVERY_TIME_SEC,
     SCENARIO_GREENFIELD,
     SERVICE_TITLE,
+    STATUS_RELEASE_BLOCKED,
+    STATUS_RELEASE_READY,
+    TITLE_ARTIFACTS_PRODUCED,
+    TITLE_CHANGES_SUMMARY,
+    TITLE_ENGINEERING_OUTPUT,
+    TITLE_EXECUTIVE_SNAPSHOT,
+    TITLE_FINAL_VERDICT,
+    TITLE_GOVERNANCE_DECISIONS,
+    TITLE_REQUIREMENTS_SATISFIED,
+    TITLE_RISKS_TRADEOFFS,
+    TITLE_ROLLBACK_STATUS,
+    TITLE_TESTS_EXECUTED,
 )
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import AuditLevel, PipelineContext, SDLCPhase
@@ -27,7 +51,7 @@ class ReleaseAgent(BaseAgent):
     """Compiles release manifests, verifies quality gates, and produces engineering reports."""
 
     def __init__(self):
-        super().__init__(name="ReleaseManagerAgent", phase=SDLCPhase.RELEASE_READINESS)
+        super().__init__(name=AGENT_NAME_RELEASE, phase=SDLCPhase.RELEASE_READINESS)
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
         test_rep = context.get_artifact("test_execution_report", {})
@@ -63,7 +87,7 @@ class ReleaseAgent(BaseAgent):
         }
 
         all_ready = all(checklist.values())
-        status = "RELEASE_READY" if all_ready else "RELEASE_BLOCKED"
+        status = STATUS_RELEASE_READY if all_ready else STATUS_RELEASE_BLOCKED
 
         release_version = (
             GREENFIELD_VERSION if context.scenario_name == SCENARIO_GREENFIELD else BROWNFIELD_VERSION
@@ -121,7 +145,7 @@ class ReleaseAgent(BaseAgent):
             ),
             alternatives=["Deploy without governance sign-off"],
             inputs=["test_execution_report", "security_guardrail_report", "blast_radius_report"],
-            outputs=["release_manifest", "engineering-summary.md"],
+            outputs=["release_manifest", ARTIFACT_ENGINEERING_SUMMARY_MD],
             governance_passed=all_ready,
         )
 
@@ -179,33 +203,33 @@ class ReleaseAgent(BaseAgent):
 
 ---
 
-## 📊 Executive Snapshot
+## {TITLE_EXECUTIVE_SNAPSHOT}
 | Metric | Result | Evidence / Notes |
 | :--- | :--- | :--- |
 | **Tasks Completed** | **{completed_tasks} / {total_tasks}** | 100% DAG execution across synchronization layers |
 | **Test Result** | **{test_rep.get('passed_tests', 0)} / {test_rep.get('total_tests', 0)} Passed** | Executed in {test_rep.get('duration_seconds', 0)}s via pytest subprocess |
 | **Security SAST** | **{sec_rep.get('total_violations', 0)} Violations** | Cleared OWASP Top 10, SSRF, SQLi, and GDPR checks |
 | **Retries / Replans** | **{replan_text}** | Bounded self-healing loop |
-| **Release Status** | **`{manifest['status']}`** | Certified by ReleaseManagerAgent |
+| **Release Status** | **`{manifest['status']}`** | Certified by {self.name} |
 
 ---
 
-## 📦 Artifacts Produced
+## {TITLE_ARTIFACTS_PRODUCED}
 All artifacts are persisted under `/artifacts` for audit and review:
-1. [`requirements.md`](file:///artifacts/requirements.md) — Formal SRS with ambiguity scores and canonical constraints.
-2. [`architecture.md`](file:///artifacts/architecture.md) — Architectural Decision Records (ADRs) and component layout.
-3. [`implementation.diff`](file:///artifacts/implementation.diff) — Unified code diff showing applied modifications.
-4. [`schema-definitions.json`](file:///artifacts/schema-definitions.json) — Formal API & database schema definitions.
-5. [`engineering-design.md`](file:///artifacts/engineering-design.md) — Layered architecture, maintainability, and test traceability matrix.
-6. [`api-openapi.json`](file:///artifacts/api-openapi.json) — OpenAPI 3.0 contract definition.
-7. [`test-results.json`](file:///artifacts/test-results.json) — Full pytest execution output and test metrics.
-8. [`risk-assessment.md`](file:///artifacts/risk-assessment.md) — AST blast radius analysis and SAST scan report.
-9. [`audit-log.jsonl`](file:///artifacts/audit-log.jsonl) — Immutable timeline of all prompts, transitions, and decisions.
-10. [`engineering-summary.md`](file:///artifacts/engineering-summary.md) — This report.
+1. [`{ARTIFACT_REQUIREMENTS_MD}`](file:///artifacts/{ARTIFACT_REQUIREMENTS_MD}) — Formal SRS with ambiguity scores and canonical constraints.
+2. [`{ARTIFACT_ARCHITECTURE_MD}`](file:///artifacts/{ARTIFACT_ARCHITECTURE_MD}) — Architectural Decision Records (ADRs) and component layout.
+3. [`{ARTIFACT_IMPLEMENTATION_DIFF}`](file:///artifacts/{ARTIFACT_IMPLEMENTATION_DIFF}) — Unified code diff showing applied modifications.
+4. [`{ARTIFACT_SCHEMA_DEFINITIONS_JSON}`](file:///artifacts/{ARTIFACT_SCHEMA_DEFINITIONS_JSON}) — Formal API & database schema definitions.
+5. [`{ARTIFACT_ENGINEERING_DESIGN_MD}`](file:///artifacts/{ARTIFACT_ENGINEERING_DESIGN_MD}) — Layered architecture, maintainability, and test traceability matrix.
+6. [`{ARTIFACT_API_OPENAPI_JSON}`](file:///artifacts/{ARTIFACT_API_OPENAPI_JSON}) — OpenAPI 3.0 contract definition.
+7. [`{ARTIFACT_TEST_RESULTS_JSON}`](file:///artifacts/{ARTIFACT_TEST_RESULTS_JSON}) — Full pytest execution output and test metrics.
+8. [`{ARTIFACT_RISK_ASSESSMENT_MD}`](file:///artifacts/{ARTIFACT_RISK_ASSESSMENT_MD}) — AST blast radius analysis and SAST scan report.
+9. [`{ARTIFACT_AUDIT_LOG_JSONL}`](file:///artifacts/{ARTIFACT_AUDIT_LOG_JSONL}) — Immutable timeline of all prompts, transitions, and decisions.
+10. [`{ARTIFACT_ENGINEERING_SUMMARY_MD}`](file:///artifacts/{ARTIFACT_ENGINEERING_SUMMARY_MD}) — This report.
 
 ---
 
-## 📐 Engineering Output Generation & Code Quality (SeniorFullStackEngineerAgent)
+## {TITLE_ENGINEERING_OUTPUT} ({AGENT_NAME_CODER})
 - **Total Codebase Volume**: `{impl_summary.get('total_lines_of_code', 1150)}` lines of production-quality Python across `{impl_summary.get('total_modules', 11)}` modules.
 - **Type Safety & Annotations**: `{impl_summary.get('type_annotation_coverage_pct', 97.9)}%` strict type annotation coverage on function signatures and return types.
 - **Clean Design Architecture**: Evaluated as **`{impl_summary.get('clean_design_grade', 'A+')}`** with modular layer isolation:
@@ -215,11 +239,11 @@ All artifacts are persisted under `/artifacts` for audit and review:
   - **Service Facade**: `service.py` (`ShortenerService` domain logic).
   - **REST API Routers**: `url.py` (POST /shorten, GET /{{code}}), `analytics.py` (GET /analytics/{{code}}).
 - **API & Schema Contracts**: `{impl_summary.get('total_schemas', 5)}` core DTO entities generated and validated.
-- **Unified Diff**: Generated and persisted to [`artifacts/implementation.diff`](file:///artifacts/implementation.diff).
+- **Unified Diff**: Generated and persisted to [`artifacts/{ARTIFACT_IMPLEMENTATION_DIFF}`](file:///artifacts/{ARTIFACT_IMPLEMENTATION_DIFF}).
 
 ---
 
-## 🛠 What Was Changed & Why
+## {TITLE_CHANGES_SUMMARY}
 - **Core Algorithms**: Implemented 64-bit MurmurHash3 + Base62 encoder ([encoder.py](file:///src/service/core/encoder.py)) with deterministic 7-character short codes and linear collision probing.
 - **SSRF & Security**: Implemented RFC-compliant URL validator ([validator.py](file:///src/service/core/validator.py)) blocking private RFC 1918 subnets, loopback addresses (`127.0.0.1`), and AWS metadata endpoints (`169.254.169.254`).
 - **High-Performance Caching**: Implemented thread-safe in-memory LRU cache with TTL expiration ([cache.py](file:///src/service/core/cache.py)) for sub-millisecond redirect lookups.
@@ -228,7 +252,7 @@ All artifacts are persisted under `/artifacts` for audit and review:
 
 ---
 
-## 🎯 Which Requirements Were Satisfied
+## {TITLE_REQUIREMENTS_SATISFIED}
 - [x] **URL Shortening API**: `POST /shortener/api/v1/shorten` returns unique short code with custom alias and TTL support.
 - [x] **Redirection**: `GET /shortener/{{{{code}}}}` issues HTTP 307 Temporary Redirect to preserve request method semantics.
 - [x] **Expiration**: Expired links return HTTP 410 Gone.
@@ -237,7 +261,7 @@ All artifacts are persisted under `/artifacts` for audit and review:
 
 ---
 
-## 🧪 Tests Executed & Results
+## {TITLE_TESTS_EXECUTED}
 The `QualityAssuranceTestAgent` ran the complete test suite under `tests/`:
 * **Total Tests Executed**: `{test_rep.get('total_tests', 0)}`
 * **Passed**: `{test_rep.get('passed_tests', 0)}`
@@ -252,7 +276,7 @@ The `QualityAssuranceTestAgent` ran the complete test suite under `tests/`:
 
 ---
 
-## ⚠️ Unresolved Assumptions, Risks & Trade-Offs
+## {TITLE_RISKS_TRADEOFFS}
 1. **In-Memory Cache vs Distributed Cluster**:
    * *Current*: Single-instance in-memory LRU cache (`OrderedDict`) with thread locking.
    * *Assumption*: Prototype runs on single instance. For multi-node cloud deployment, an external Redis cluster with Redis Sentinel or Redis Cluster is required to prevent cache inconsistency.
@@ -264,23 +288,23 @@ The `QualityAssuranceTestAgent` ran the complete test suite under `tests/`:
 
 ---
 
-## 🔄 Rollback & Recovery Status
+## {TITLE_ROLLBACK_STATUS}
 - **Retries / Dynamic Replanning**: {replan_text}
 - **Rollbacks Triggered**: None required during this execution.
 - **Rollback Runbook**: Point-in-time file snapshot preserved by `RollbackController`. In the event of a post-release defect, executing `rollback_to_checkpoint("{ROLLBACK_CHECKPOINT_ID}")` will restore files within {ROLLBACK_RECOVERY_TIME_SEC} seconds.
 
 ---
 
-## 🛡 Human-in-the-Loop Governance Decisions
+## {TITLE_GOVERNANCE_DECISIONS}
 {approvals_text}
 
 ---
 
-## 🏁 Final Verdict
+## {TITLE_FINAL_VERDICT}
 **Result**: **`{manifest['status']}`**
 All quality, security, architectural, and testing gates passed with verifiable empirical evidence. The artifacts are approved for engineering review and release sign-off.
 """
-        (artifacts_dir / "engineering-summary.md").write_text(report_md, encoding="utf-8")
+        (artifacts_dir / ARTIFACT_ENGINEERING_SUMMARY_MD).write_text(report_md, encoding="utf-8")
 
         # 2. Requirements SRS (Markdown)
         req_md = f"""# Software Requirements Specification (SRS)
@@ -302,7 +326,7 @@ All quality, security, architectural, and testing gates passed with verifiable e
 - Rate Limiting: 60 write req/min, 1200 read req/min
 - Privacy: GDPR salted SHA-256 IP hashing
 """
-        (artifacts_dir / "requirements.md").write_text(req_md, encoding="utf-8")
+        (artifacts_dir / ARTIFACT_REQUIREMENTS_MD).write_text(req_md, encoding="utf-8")
 
         # 3. Architecture Manifest (Markdown)
         arch_md = f"""# Architectural Decision Records (ADRs)
@@ -322,25 +346,25 @@ All quality, security, architectural, and testing gates passed with verifiable e
 - **Decision**: Hash client IP with cryptographic salt before recording click events.
 - **Rationale**: Prevents storing identifiable PII while maintaining accurate unique visitor metrics.
 """
-        (artifacts_dir / "architecture.md").write_text(arch_md, encoding="utf-8")
+        (artifacts_dir / ARTIFACT_ARCHITECTURE_MD).write_text(arch_md, encoding="utf-8")
 
         # 3b. Implementation Diff, Schemas, and Design Doc
         diff_content = context.get_artifact("implementation_diff") or context.get_artifact("implementation.diff")
         if diff_content:
-            (artifacts_dir / "implementation.diff").write_text(diff_content, encoding="utf-8")
+            (artifacts_dir / ARTIFACT_IMPLEMENTATION_DIFF).write_text(diff_content, encoding="utf-8")
 
         schemas_data = context.get_artifact("schema_definitions")
         if schemas_data:
-            (artifacts_dir / "schema-definitions.json").write_text(
+            (artifacts_dir / ARTIFACT_SCHEMA_DEFINITIONS_JSON).write_text(
                 json.dumps(schemas_data, indent=2), encoding="utf-8"
             )
 
         design_doc = context.get_artifact("engineering_design_doc")
         if design_doc:
-            (artifacts_dir / "engineering-design.md").write_text(design_doc, encoding="utf-8")
+            (artifacts_dir / ARTIFACT_ENGINEERING_DESIGN_MD).write_text(design_doc, encoding="utf-8")
 
         # 4. Test Results JSON
-        (artifacts_dir / "test-results.json").write_text(
+        (artifacts_dir / ARTIFACT_TEST_RESULTS_JSON).write_text(
             json.dumps(test_rep, indent=2), encoding="utf-8"
         )
 
@@ -361,7 +385,7 @@ All quality, security, architectural, and testing gates passed with verifiable e
 - Indirectly Impacted Modules: `{len(blast_rep.get('indirectly_impacted_modules', []))}`
 - Schema Modification: `{blast_rep.get('is_schema_modified', False)}`
 """
-        (artifacts_dir / "risk-assessment.md").write_text(risk_md, encoding="utf-8")
+        (artifacts_dir / ARTIFACT_RISK_ASSESSMENT_MD).write_text(risk_md, encoding="utf-8")
 
         # 6. OpenAPI JSON Spec
         openapi_spec = {
@@ -383,12 +407,12 @@ All quality, security, architectural, and testing gates passed with verifiable e
                 },
             },
         }
-        (artifacts_dir / "api-openapi.json").write_text(
+        (artifacts_dir / ARTIFACT_API_OPENAPI_JSON).write_text(
             json.dumps(openapi_spec, indent=2), encoding="utf-8"
         )
 
         # 7. Audit Log JSONL
-        audit_log_file = artifacts_dir / "audit-log.jsonl"
+        audit_log_file = artifacts_dir / ARTIFACT_AUDIT_LOG_JSONL
         with open(audit_log_file, "w", encoding="utf-8") as f:
             for ev in getattr(context, "audit_events", []):
                 f.write(json.dumps(ev.model_dump()) + "\n")

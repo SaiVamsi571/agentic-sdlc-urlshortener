@@ -4,13 +4,18 @@ Synthesizes Architectural Decision Records (ADRs), component diagrams, data mode
 """
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent
-from src.constants import OPENAPI_VERSION, SERVICE_DESCRIPTION, SERVICE_TITLE
+from src.constants import (
+    AGENT_NAME_ARCHITECTURE,
+    OPENAPI_VERSION,
+    SERVICE_DESCRIPTION,
+    SERVICE_TITLE,
+)
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import PipelineContext, SDLCPhase
 
 class ArchitectureAgent(BaseAgent):
     def __init__(self):
-        super().__init__(name="PrincipalArchitectAgent", phase=SDLCPhase.ARCHITECTURE)
+        super().__init__(name=AGENT_NAME_ARCHITECTURE, phase=SDLCPhase.ARCHITECTURE)
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
         srs = context.get_artifact("requirements_srs", {})

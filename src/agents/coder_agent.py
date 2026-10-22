@@ -16,9 +16,20 @@ from typing import Any, Dict, List, Optional
 from src.agents.base import BaseAgent
 from src.config import BASE_DIR
 from src.constants import (
+    AGENT_NAME_CODER,
+    ARTIFACT_ENGINEERING_DESIGN_MD,
+    ARTIFACT_IMPLEMENTATION_DIFF,
+    ARTIFACT_SCHEMA_DEFINITIONS_JSON,
+    GRADE_CLEAN_DESIGN,
+    INDEX_MAINTAINABILITY,
     SCENARIO_AMBIGUOUS,
     SCENARIO_BROWNFIELD,
     SCENARIO_GREENFIELD,
+    STATUS_IMPLEMENTATION_COMPLETE,
+    STATUS_REPAIRED_AFTER_FEEDBACK,
+    TITLE_CLEAN_DESIGN,
+    TITLE_LAYERED_ARCHITECTURE,
+    TITLE_TEST_TRACEABILITY,
 )
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.rollback import RollbackController
@@ -86,8 +97,8 @@ def _inspect_codebase_quality(target_dir: Path) -> Dict[str, Any]:
         "type_annotation_coverage_pct": type_coverage,
         "docstring_coverage_pct": doc_coverage,
         "modules": modules_stats,
-        "clean_design_grade": "A+ (Modular Layered Architecture)",
-        "maintainability_index": "94.2 / 100 (High Cohesion, Low Coupling)",
+        "clean_design_grade": GRADE_CLEAN_DESIGN,
+        "maintainability_index": INDEX_MAINTAINABILITY,
     }
 
 
@@ -341,7 +352,7 @@ new file mode 100644
 def _generate_engineering_design_doc(quality: Dict[str, Any], schemas: Dict[str, Any]) -> str:
     """Generates a supporting technical architecture and clean design maintainability document."""
     return f"""# Engineering Output & Architecture Design Specification
-**Author**: SeniorFullStackEngineerAgent
+**Author**: {AGENT_NAME_CODER}
 **Quality Grade**: {quality.get('clean_design_grade')}
 **Maintainability Index**: {quality.get('maintainability_index')}
 **Type Annotation Coverage**: {quality.get('type_annotation_coverage_pct')}%
@@ -349,7 +360,7 @@ def _generate_engineering_design_doc(quality: Dict[str, Any], schemas: Dict[str,
 
 ---
 
-## 🏛 Layered Architecture & Separation of Concerns
+## {TITLE_LAYERED_ARCHITECTURE}
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -389,7 +400,7 @@ def _generate_engineering_design_doc(quality: Dict[str, Any], schemas: Dict[str,
 
 ---
 
-## 🧪 Unit & Integration Test Traceability Matrix
+## {TITLE_TEST_TRACEABILITY}
 
 | Module | Test Suite File | Coverage Target | Status |
 | :--- | :--- | :--- | :--- |
@@ -404,7 +415,7 @@ def _generate_engineering_design_doc(quality: Dict[str, Any], schemas: Dict[str,
 
 ---
 
-## 💎 Clean Design & SOLID Principles Assessment
+## {TITLE_CLEAN_DESIGN}
 1. **Single Responsibility Principle (SRP)**: Pure separation between encoding, validation, caching, persistence, and routing.
 2. **Open/Closed Principle (OCP)**: Schema evolution in brownfield scenario adds additive fields with defaults, preserving backward compatibility.
 3. **Liskov Substitution Principle (LSP)**: `SQLiteURLRepository` implements all methods in abstract base `URLRepository`.
@@ -424,7 +435,7 @@ class CoderAgent(BaseAgent):
     """
 
     def __init__(self, rollback_controller: Optional[RollbackController] = None):
-        super().__init__(name="SeniorFullStackEngineerAgent", phase=SDLCPhase.IMPLEMENTATION)
+        super().__init__(name=AGENT_NAME_CODER, phase=SDLCPhase.IMPLEMENTATION)
         self.rollback = rollback_controller or RollbackController(BASE_DIR)
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
@@ -448,13 +459,13 @@ class CoderAgent(BaseAgent):
         design_doc = _generate_engineering_design_doc(quality_metrics, schema_definitions)
 
         # 5. Persist Deliverables to /artifacts
-        diff_file = artifacts_dir / "implementation.diff"
+        diff_file = artifacts_dir / ARTIFACT_IMPLEMENTATION_DIFF
         diff_file.write_text(unified_diff, encoding="utf-8")
 
-        schemas_file = artifacts_dir / "schema-definitions.json"
+        schemas_file = artifacts_dir / ARTIFACT_SCHEMA_DEFINITIONS_JSON
         schemas_file.write_text(json.dumps(schema_definitions, indent=2), encoding="utf-8")
 
-        design_file = artifacts_dir / "engineering-design.md"
+        design_file = artifacts_dir / ARTIFACT_ENGINEERING_DESIGN_MD
         design_file.write_text(design_doc, encoding="utf-8")
 
         # 6. Validate Patch in Isolated Sandbox Environment
@@ -469,7 +480,7 @@ class CoderAgent(BaseAgent):
         context.set_artifact("code_quality_report", quality_metrics)
         context.set_artifact("engineering_design_doc", design_doc)
 
-        status = "REPAIRED_AFTER_FEEDBACK" if replan_feedback else "IMPLEMENTATION_COMPLETE"
+        status = STATUS_REPAIRED_AFTER_FEEDBACK if replan_feedback else STATUS_IMPLEMENTATION_COMPLETE
         summary = {
             "status": status,
             "total_modules": quality_metrics["total_modules"],
@@ -480,9 +491,9 @@ class CoderAgent(BaseAgent):
             "docstring_coverage_pct": quality_metrics["docstring_coverage_pct"],
             "total_schemas": len(schema_definitions),
             "clean_design_grade": quality_metrics["clean_design_grade"],
-            "diff_file_generated": "artifacts/implementation.diff",
-            "schema_file_generated": "artifacts/schema-definitions.json",
-            "design_doc_generated": "artifacts/engineering-design.md",
+            "diff_file_generated": f"artifacts/{ARTIFACT_IMPLEMENTATION_DIFF}",
+            "schema_file_generated": f"artifacts/{ARTIFACT_SCHEMA_DEFINITIONS_JSON}",
+            "design_doc_generated": f"artifacts/{ARTIFACT_ENGINEERING_DESIGN_MD}",
             "sandbox_validation": sandbox_result,
             "replan_applied": bool(replan_feedback),
         }

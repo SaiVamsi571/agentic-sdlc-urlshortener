@@ -6,12 +6,17 @@ resolves underspecified constraints, and normalizes into a formal Software Requi
 import re
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent
+from src.constants import (
+    AGENT_NAME_REQUIREMENTS,
+    STATUS_NORMALIZED,
+    STATUS_NORMALIZED_AND_LOCKED,
+)
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import PipelineContext, SDLCPhase
 
 class RequirementsAgent(BaseAgent):
     def __init__(self):
-        super().__init__(name="RequirementsAnalystAgent", phase=SDLCPhase.REQUIREMENTS)
+        super().__init__(name=AGENT_NAME_REQUIREMENTS, phase=SDLCPhase.REQUIREMENTS)
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
         prompt = context.requirement_prompt or "Build a high-performance URL shortener service."
@@ -95,7 +100,7 @@ class RequirementsAgent(BaseAgent):
             "title": "URL Shortener Service - System Requirements Specification",
             "version": "1.0.0",
             "ambiguity_score": ambiguity_score,
-            "status": "NORMALIZED_AND_LOCKED",
+            "status": STATUS_NORMALIZED_AND_LOCKED,
             "functional_requirements": [
                 {
                     "id": "FR-001",

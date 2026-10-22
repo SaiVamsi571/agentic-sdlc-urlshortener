@@ -1,62 +1,78 @@
-diff --git a/src/service/models.py b/src/service/models.py
---- a/src/service/models.py
-+++ b/src/service/models.py
-@@ -34,6 +34,10 @@ class ShortURLRecord(BaseModel):
-     is_active: bool = True
-     click_count: int = 0
-     last_accessed: Optional[datetime] = None
-+    # Brownfield v1.1.0 Enhancements:
-+    device_type: Optional[str] = "desktop"
-+    referrer_domain: Optional[str] = None
-+    rate_limit_bucket: Optional[str] = "default"
- 
- class ClickEventRecord(BaseModel):
-     event_id: str
-@@ -41,4 +45,7 @@ class ClickEventRecord(BaseModel):
-     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-     ip_hash: str # GDPR-compliant salted hash
-     referrer: Optional[str] = None
-+    device_type: str = "desktop" # mobile, desktop, tablet, bot
-+    browser: str = "other"
-+    utm_source: Optional[str] = None
-diff --git a/src/service/core/rate_limiter.py b/src/service/core/rate_limiter.py
+diff --git a/src/service/core/encoder.py b/src/service/core/encoder.py
 new file mode 100644
 --- /dev/null
-+++ b/src/service/core/rate_limiter.py
-@@ -0,0 +1,48 @@
-+from collections import defaultdict, deque
++++ b/src/service/core/encoder.py
+@@ -0,0 +1,52 @@
++import mmh3
++from src.constants import BASE62_ALPHABET, BASE62_RADIX, DEFAULT_CODE_LENGTH
++
++def murmur3_hash64(key: str, seed: int = 42) -> int:
++    """Produce deterministic 64-bit integer hash using MurmurHash3."""
++    return mmh3.hash64(key, seed)[0] & 0xFFFFFFFFFFFFFFFF
++
++def encode_base62(num: int, length: int = DEFAULT_CODE_LENGTH) -> str:
++    """Encode unsigned integer to fixed-length Base62 string."""
++    chars = []
++    for _ in range(length):
++        num, rem = divmod(num, BASE62_RADIX)
++        chars.append(BASE62_ALPHABET[rem])
++    return "".join(reversed(chars))
+diff --git a/src/service/core/validator.py b/src/service/core/validator.py
+new file mode 100644
+--- /dev/null
++++ b/src/service/core/validator.py
+@@ -0,0 +1,38 @@
++import ipaddress
++from urllib.parse import urlparse
++from src.constants import ALLOWED_URL_SCHEMES, BLOCKED_HOSTNAMES
++
++def validate_url(url: str) -> bool:
++    """Validate RFC syntax and prevent SSRF attacks against loopback or cloud metadata."""
++    parsed = urlparse(url)
++    if parsed.scheme.lower() not in ALLOWED_URL_SCHEMES:
++        return False
++    host = parsed.hostname or ""
++    if host.lower() in BLOCKED_HOSTNAMES:
++        return False
++    try:
++        ip = ipaddress.ip_address(host)
++        if ip.is_private or ip.is_loopback or ip.is_link_local:
++            return False
++    except ValueError:
++        pass
++    return True
+diff --git a/src/service/core/cache.py b/src/service/core/cache.py
+new file mode 100644
+--- /dev/null
++++ b/src/service/core/cache.py
+@@ -0,0 +1,32 @@
++from collections import OrderedDict
 +import threading
 +import time
 +
-+class SlidingWindowRateLimiter:
-+    """Thread-safe sliding-window rate limiter preventing SLA violations."""
-+    def __init__(self, write_limit: int = 60, read_limit: int = 1200, window_sec: int = 60):
-+        self.write_limit = write_limit
-+        self.read_limit = read_limit
-+        self.window_sec = window_sec
++class LRUCacheWithTTL:
++    """Thread-safe in-memory LRU cache with TTL expiration for redirect lookups."""
++    def __init__(self, max_size: int = 10000, default_ttl_sec: int = 300):
++        self.max_size = max_size
++        self.default_ttl = default_ttl_sec
 +        self._lock = threading.RLock()
-+        self._records = defaultdict(deque)
++        self._store = OrderedDict()
 +
-+    def allow_request(self, key: str, is_write: bool = False) -> bool:
-+        limit = self.write_limit if is_write else self.read_limit
-+        now = time.time()
++    def get(self, key: str) -> str | None:
 +        with self._lock:
-+            q = self._records[key]
-+            while q and q[0] <= now - self.window_sec:
-+                q.popleft()
-+            if len(q) >= limit:
-+                return False
-+            q.append(now)
-+            return True
-diff --git a/src/service/routers/analytics.py b/src/service/routers/analytics.py
---- a/src/service/routers/analytics.py
-+++ b/src/service/routers/analytics.py
-@@ -16,6 +16,14 @@ router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"])
- @router.get("/{short_code}", response_model=AnalyticsSummaryDTO)
- async def get_url_analytics(short_code: str):
-     """Retrieve granular analytics breakdown including device and referrer statistics."""
--    return await service.get_summary(short_code)
-+    stats = await service.get_detailed_analytics(short_code)
-+    if not stats:
-+        raise HTTPException(status_code=404, detail="Analytics not found for short code")
-+    return stats
++            if key not in self._store:
++                return None
++            val, expiry = self._store[key]
++            if time.time() > expiry:
++                del self._store[key]
++                return None
++            self._store.move_to_end(key)
++            return val
++
++    def put(self, key: str, val: str, ttl: int | None = None) -> None:
++        with self._lock:
++            if key in self._store:
++                self._store.move_to_end(key)
++            self._store[key] = (val, time.time() + (ttl or self.default_ttl))
++            if len(self._store) > self.max_size:
++                self._store.popitem(last=False)

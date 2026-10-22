@@ -21,6 +21,11 @@ from src.service.models import (
     ShortURLRecord,
     SystemStats
 )
+from src.constants import (
+    MSG_ALIAS_CONFLICT,
+    MSG_URL_EXPIRED,
+    MSG_URL_NOT_FOUND,
+)
 from src.service.storage.base import BaseURLRepository
 from src.service.storage.memory_sqlite import SQLiteURLRepository
 
@@ -65,7 +70,7 @@ class URLShortenerService:
         if request.custom_alias:
             clean_alias = self.validator.validate_custom_alias(request.custom_alias)
             if self.repo.is_code_taken(clean_alias):
-                raise AliasConflictError(f"Custom alias '{clean_alias}' is already in use.")
+                raise AliasConflictError(MSG_ALIAS_CONFLICT.format(alias=clean_alias))
             short_code = clean_alias
             is_custom = True
         else:
@@ -142,7 +147,7 @@ class URLShortenerService:
         # 2. Query Repository
         record = self.repo.get_url(short_code)
         if not record or not record.is_active:
-            raise URLNotFoundError(f"Short URL code '{short_code}' not found.")
+            raise URLNotFoundError(MSG_URL_NOT_FOUND.format(code=short_code))
 
         # 3. Check Expiration
         if record.expires_at:
@@ -151,7 +156,7 @@ class URLShortenerService:
             exp = record.expires_at if record.expires_at.tzinfo else record.expires_at.replace(tzinfo=timezone.utc)
             if now > exp:
                 self.cache.delete(short_code)
-                raise URLExpiredError(f"Short URL '{short_code}' expired at {record.expires_at.isoformat()}.")
+                raise URLExpiredError(MSG_URL_EXPIRED.format(code=short_code, expiry=record.expires_at.isoformat()))
 
         # 4. Cache populate if missed
         if not cached_url:

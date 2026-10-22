@@ -4,14 +4,14 @@
 
 ---
 
-## 🌟 Executive Summary
+## Executive Summary
 **AetherSDLC** is an enterprise-grade agentic software engineering system that transforms high-level product requirements into fully reviewable, production-ready engineering outcomes. Built on the core principle of **controlled autonomy**, AetherSDLC enables AI agents to autonomously handle complex, multi-step engineering tasks (requirements interpretation, architectural design, codebase reasoning, parallel code generation, security SAST, and automated verification) while maintaining **human oversight, policy guardrails, and audit-grade decision lineage**.
 
 To demonstrate these capabilities, the system autonomously designs, builds, refactors, and tests a **high-performance, production-ready URL Shortener Service** with Base62/MurmurHash3 encoding, collision probing, SSRF protection, in-memory LRU caching, sliding-window rate limiting, and GDPR-compliant salted click analytics.
 
 ---
 
-## 🏗 Key Architectural Highlights
+## Key Architectural Highlights
 
 | Core Pillar | Engineering Implementation |
 | :--- | :--- |
@@ -24,7 +24,7 @@ To demonstrate these capabilities, the system autonomously designs, builds, refa
 
 ---
 
-## 🚀 Quickstart & Setup Instructions
+## Quickstart & Setup Instructions
 
 ### Prerequisites
 - Python 3.10+ (tested on Python 3.14)
@@ -74,7 +74,7 @@ python -m pytest tests/ -v
 
 ---
 
-## 🎯 The Three Demonstration Scenarios
+## The Three Demonstration Scenarios
 
 ### Scenario 1: Greenfield (Full URL Shortener Build)
 - **Input Requirement**: High-level specification for a production URL Shortener with Base62 encoding, custom aliases, 30-day default TTL, HTTP 307 redirects, LRU caching, and click analytics.
@@ -107,7 +107,7 @@ python -m pytest tests/ -v
 
 ---
 
-## 📊 Reliability & Observability Metrics
+## Reliability & Observability Metrics
 
 The system tracks real-time enterprise reliability telemetry:
 - **Success Rate (%)**: Tracked across all pipeline tasks and end-to-end runs.
@@ -118,7 +118,7 @@ The system tracks real-time enterprise reliability telemetry:
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ```
 agentic-sdlc-urlshortener/

@@ -9,12 +9,17 @@ import time
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent
 from src.config import BASE_DIR
+from src.constants import (
+    AGENT_NAME_TEST,
+    STATUS_TESTS_FAILED,
+    STATUS_TESTS_PASSED,
+)
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import AuditLevel, PipelineContext, SDLCPhase
 
 class TestAgent(BaseAgent):
     def __init__(self):
-        super().__init__(name="QualityAssuranceTestAgent", phase=SDLCPhase.TESTING)
+        super().__init__(name=AGENT_NAME_TEST, phase=SDLCPhase.TESTING)
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
         test_dir = BASE_DIR / "tests"
@@ -46,7 +51,7 @@ class TestAgent(BaseAgent):
 
         test_report = {
             "passed": passed,
-            "status": "TESTS_PASSED" if passed else "TESTS_FAILED",
+            "status": STATUS_TESTS_PASSED if passed else STATUS_TESTS_FAILED,
             "total_tests": total_tests,
             "passed_tests": passed_count,
             "failed_tests": failed_count,

@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Set
 from src.agents.base import BaseAgent
 from src.config import BASE_DIR
 from src.constants import (
+    AGENT_NAME_BLAST_RADIUS,
     RISK_BASE_SCORE,
     RISK_CATEGORY_CRITICAL,
     RISK_CATEGORY_HIGH,
@@ -51,7 +52,7 @@ class BlastRadiusAgent(BaseAgent):
     """Evaluates the architectural blast radius of proposed brownfield changes."""
 
     def __init__(self):
-        super().__init__(name="CodebaseReasoningAgent", phase=SDLCPhase.BLAST_RADIUS)
+        super().__init__(name=AGENT_NAME_BLAST_RADIUS, phase=SDLCPhase.BLAST_RADIUS)
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
         target_dir = BASE_DIR / "src" / "service"

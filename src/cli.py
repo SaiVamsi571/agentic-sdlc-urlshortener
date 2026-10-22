@@ -14,6 +14,10 @@ from rich.tree import Tree
 from src.constants import (
     CLI_BANNER,
     CLI_DESCRIPTION,
+    CLI_MARKER_HITL,
+    CLI_MARKER_REPLAN,
+    CLI_MARKER_RUNNING,
+    CLI_MARKER_SUCCESS,
     SCENARIO_ALL,
     SCENARIO_AMBIGUOUS,
     SCENARIO_BROWNFIELD,
@@ -69,16 +73,16 @@ def cli_callback(event):
     """Handle pipeline SSE-like events and print them to the terminal."""
     ev_type = event.get("type")
     if ev_type == "NODE_STARTED":
-        console.print(f"  [cyan]▶ [RUNNING][/cyan] Node [bold]{event.get('node_id')}[/bold]: {event.get('node_name')}")
+        console.print(f"  [cyan]{CLI_MARKER_RUNNING} [RUNNING][/cyan] Node [bold]{event.get('node_id')}[/bold]: {event.get('node_name')}")
     elif ev_type == "NODE_COMPLETED":
-        console.print(f"  [green]✔ [SUCCESS][/green] Node [bold]{event.get('node_id')}[/bold] finished.")
+        console.print(f"  [green]{CLI_MARKER_SUCCESS} [SUCCESS][/green] Node [bold]{event.get('node_id')}[/bold] finished.")
     elif ev_type == "DYNAMIC_REPLAN_TRIGGERED":
-        console.print(f"  [yellow]⚡ [REPLAN][/yellow] Rescheduled minimal subgraph: {event.get('repaired_nodes')}")
+        console.print(f"  [yellow]{CLI_MARKER_REPLAN} [REPLAN][/yellow] Rescheduled minimal subgraph: {event.get('repaired_nodes')}")
     elif ev_type == "HITL_REQUESTED":
-        console.print(f"  [magenta]🛡 [HITL GATE][/magenta] {event.get('gate_title')} [Risk: {event.get('risk_level')}]")
+        console.print(f"  [magenta]{CLI_MARKER_HITL} [HITL GATE][/magenta] {event.get('gate_title')} [Risk: {event.get('risk_level')}]")
     elif ev_type == "HITL_RESOLVED":
         status_color = "green" if event.get("approved") else "red"
-        console.print(f"  [{status_color}]✔ [HITL SIGNED-OFF][/{status_color}] By {event.get('reviewer')}: {event.get('comments')}")
+        console.print(f"  [{status_color}]{CLI_MARKER_SUCCESS} [HITL SIGNED-OFF][/{status_color}] By {event.get('reviewer')}: {event.get('comments')}")
 
 
 async def main():

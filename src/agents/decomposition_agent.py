@@ -5,12 +5,13 @@ concurrency groupings, and gate conditions.
 """
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent
+from src.constants import AGENT_NAME_DECOMPOSITION
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.state import PipelineContext, SDLCPhase
 
 class DecompositionAgent(BaseAgent):
     def __init__(self):
-        super().__init__(name="TechnicalProgramDecompositionAgent", phase=SDLCPhase.DECOMPOSITION)
+        super().__init__(name=AGENT_NAME_DECOMPOSITION, phase=SDLCPhase.DECOMPOSITION)
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:
         srs = context.get_artifact("requirements_srs", {})

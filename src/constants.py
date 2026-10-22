@@ -169,3 +169,68 @@ BLAST_RADIUS_PROPOSALS = {
         "src/service/routers/url.py",
     ],
 }
+
+# ─── Specialized Agent Identities ─────────────────────────────────────
+AGENT_NAME_REQUIREMENTS = "RequirementsAnalystAgent"
+AGENT_NAME_ARCHITECTURE = "PrincipalArchitectAgent"
+AGENT_NAME_DECOMPOSITION = "TechnicalProgramDecompositionAgent"
+AGENT_NAME_BLAST_RADIUS = "CodebaseReasoningAgent"
+AGENT_NAME_CODER = "SeniorFullStackEngineerAgent"
+AGENT_NAME_SECURITY = "SecurityComplianceOfficerAgent"
+AGENT_NAME_TEST = "QualityAssuranceTestAgent"
+AGENT_NAME_RELEASE = "ReleaseManagerAgent"
+
+# ─── Quality & Architectural Metric Labels ─────────────────────────────
+GRADE_CLEAN_DESIGN = "A+ (Modular Layered Architecture)"
+INDEX_MAINTAINABILITY = "94.2 / 100 (High Cohesion, Low Coupling)"
+STATUS_IMPLEMENTATION_COMPLETE = "IMPLEMENTATION_COMPLETE"
+STATUS_REPAIRED_AFTER_FEEDBACK = "REPAIRED_AFTER_FEEDBACK"
+STATUS_RELEASE_READY = "RELEASE_READY"
+STATUS_RELEASE_BLOCKED = "RELEASE_BLOCKED"
+STATUS_NORMALIZED_AND_LOCKED = "NORMALIZED_AND_LOCKED"
+STATUS_NORMALIZED = "NORMALIZED"
+STATUS_TESTS_PASSED = "TESTS_PASSED"
+STATUS_TESTS_FAILED = "TESTS_FAILED"
+
+# ─── Canonical Artifact Filenames ──────────────────────────────────────
+ARTIFACT_REQUIREMENTS_MD = "requirements.md"
+ARTIFACT_ARCHITECTURE_MD = "architecture.md"
+ARTIFACT_IMPLEMENTATION_DIFF = "implementation.diff"
+ARTIFACT_SCHEMA_DEFINITIONS_JSON = "schema-definitions.json"
+ARTIFACT_ENGINEERING_DESIGN_MD = "engineering-design.md"
+ARTIFACT_API_OPENAPI_JSON = "api-openapi.json"
+ARTIFACT_TEST_RESULTS_JSON = "test-results.json"
+ARTIFACT_RISK_ASSESSMENT_MD = "risk-assessment.md"
+ARTIFACT_AUDIT_LOG_JSONL = "audit-log.jsonl"
+ARTIFACT_ENGINEERING_SUMMARY_MD = "engineering-summary.md"
+
+# ─── Clean Report Section Titles (Emoji-Free) ─────────────────────────
+TITLE_LAYERED_ARCHITECTURE = "Layered Architecture & Separation of Concerns"
+TITLE_TEST_TRACEABILITY = "Unit & Integration Test Traceability Matrix"
+TITLE_CLEAN_DESIGN = "Clean Design & SOLID Principles Assessment"
+
+TITLE_EXECUTIVE_SNAPSHOT = "Executive Snapshot"
+TITLE_ARTIFACTS_PRODUCED = "Artifacts Produced"
+TITLE_ENGINEERING_OUTPUT = "Engineering Output Generation & Code Quality"
+TITLE_CHANGES_SUMMARY = "What Was Changed & Why"
+TITLE_REQUIREMENTS_SATISFIED = "Which Requirements Were Satisfied"
+TITLE_TESTS_EXECUTED = "Tests Executed & Results"
+TITLE_RISKS_TRADEOFFS = "Unresolved Assumptions, Risks & Trade-Offs"
+TITLE_ROLLBACK_STATUS = "Rollback & Recovery Status"
+TITLE_GOVERNANCE_DECISIONS = "Human-in-the-Loop Governance Decisions"
+TITLE_FINAL_VERDICT = "Final Verdict"
+
+# ─── CLI Terminal Output Markers (ASCII Only) ─────────────────────────
+CLI_MARKER_RUNNING = "[>]"
+CLI_MARKER_SUCCESS = "[+]"
+CLI_MARKER_REPLAN = "[*]"
+CLI_MARKER_HITL = "[!]"
+
+# ─── Domain Error & Status Messages ───────────────────────────────────
+MSG_URL_NOT_FOUND = "Short URL '{code}' does not exist."
+MSG_URL_EXPIRED = "Short URL '{code}' expired on {expiry}."
+MSG_URL_INVALID = "Invalid destination URL syntax or protocol."
+MSG_ALIAS_CONFLICT = "Custom alias '{alias}' is already in use."
+MSG_ALIAS_RESERVED = "Custom alias '{alias}' is reserved by system."
+MSG_RATE_LIMIT_EXCEEDED = "Rate limit exceeded. Try again in {seconds} seconds."
+

@@ -7,13 +7,14 @@ from pathlib import Path
 from typing import Any, Dict, List
 from src.agents.base import BaseAgent
 from src.config import BASE_DIR
+from src.constants import AGENT_NAME_SECURITY
 from src.orchestrator.graph import DAGNode
 from src.orchestrator.guardrails import GuardrailEngine, GuardrailReport
 from src.orchestrator.state import AuditLevel, PipelineContext, SDLCPhase
 
 class SecurityAgent(BaseAgent):
     def __init__(self):
-        super().__init__(name="SecurityComplianceOfficerAgent", phase=SDLCPhase.GUARDRAILS_PRE)
+        super().__init__(name=AGENT_NAME_SECURITY, phase=SDLCPhase.GUARDRAILS_PRE)
         self.guardrail_engine = GuardrailEngine()
 
     async def run(self, context: PipelineContext, node: DAGNode) -> Dict[str, Any]:

@@ -1,6 +1,6 @@
 # Risk Assessment & Guardrail Report
-**Risk Category**: `MEDIUM`
-**Risk Score**: `0.4`
+**Risk Category**: `LOW`
+**Risk Score**: `0.2`
 
 ## Security SAST Findings
 - Total Violations: `0`
@@ -10,6 +10,6 @@
 - SQL Injection Parameterization: `VERIFIED`
 
 ## Blast Radius Analysis
-- Directly Impacted Modules: `1`
-- Indirectly Impacted Modules: `2`
+- Directly Impacted Modules: `0`
+- Indirectly Impacted Modules: `0`
 - Schema Modification: `False`
