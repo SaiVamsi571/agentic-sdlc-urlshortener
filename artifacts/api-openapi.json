@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Schwab Enterprise URL Shortener",
-    "version": "1.1.0",
+    "version": "1.0.0",
     "description": "High-performance URL shortener API with analytics and rate limiting."
   },
   "paths": {
