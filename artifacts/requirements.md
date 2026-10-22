@@ -1,6 +1,6 @@
 # Software Requirements Specification (SRS)
 **Scenario**: GREENFIELD
-**Pipeline**: `f64577a9-515e-42b4-9fd3-191ca63986a7`
+**Pipeline**: `60242cf5-1730-453a-89ce-1ba65e8848e4`
 
 ## Input Prompt
 > "Build enterprise URL shortener with Base62, custom aliases, 30-day TTL, LRU caching, and click analytics."
